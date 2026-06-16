@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import random
-from engine.board import BitBoard, Color, PieceType
+
+from engine.board import BitBoard, Color
 
 _rng = random.Random(0xABCDEF42)
 _PIECE_TABLE: list[list[list[int]]] = [
