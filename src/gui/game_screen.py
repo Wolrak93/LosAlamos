@@ -101,7 +101,7 @@ class GameScreen:
             return
         if self._promo_sq is not None:
             return
-        if self._use_clock and not self._is_bot_turn():
+        if self._use_clock:
             color = self._board.side_to_move
             self._clocks[color] -= dt
             if self._clocks[color] <= 0:
@@ -396,9 +396,14 @@ class GameScreen:
             return y
 
         # Black at top
+        black_bot_label = (
+            f"{type(self._config.black_bot).__name__} · Schwarz"
+            if self._config.black_bot
+            else "Mensch · Schwarz"
+        )
         draw_player(Color.BLACK,
                     self._config.black_name,
-                    "RandomBot · Schwarz" if self._config.black_bot else "Mensch · Schwarz")
+                    black_bot_label)
 
         # Divider + back button
         pygame.draw.line(surf, BORDER, (INFO_X + 8, y), (INFO_X + INFO_W - 8, y), 1)
@@ -415,9 +420,14 @@ class GameScreen:
         y += 8
 
         # White at bottom
+        white_bot_label = (
+            f"{type(self._config.white_bot).__name__} · Weiß"
+            if self._config.white_bot
+            else "Mensch · Weiß"
+        )
         draw_player(Color.WHITE,
                     self._config.white_name,
-                    "GreedyBot · Weiß" if self._config.white_bot else "Mensch · Weiß")
+                    white_bot_label)
 
     def _captured_display(self, capturing_color: Color) -> str:
         opp = Color(1 - int(capturing_color))
@@ -484,23 +494,32 @@ class GameScreen:
         lbl = font_label.render("ZUGHISTORIE", True, TEXT_MUTED)
         surf.blit(lbl, (HIST_X + 6, 10))
 
-        y = 30
+        panel_top = 30
+        row_h = font_hist.get_height() + 4
+        available_h = WINDOW_H - panel_top - 10
+        max_rows = max(1, available_h // row_h)
+
+        # Build the full list of rows to display (completed pairs + optional half-move)
+        all_rows: list[tuple[int, str, str]] = []
         for i, (white_pgn, black_pgn) in enumerate(self._move_history):
-            num = font_hist.render(f"{i+1}.", True, TEXT_MUTED)
-            surf.blit(num, (HIST_X + 4, y))
-            wt = font_hist.render(white_pgn, True, TEXT_DARK)
-            surf.blit(wt, (HIST_X + 26, y))
-            bt = font_hist.render(black_pgn, True, TEXT_DARK)
-            surf.blit(bt, (HIST_X + 66, y))
-            y += 16
-            if y > WINDOW_H - 20:
-                break
-        # Current half-move (white played, waiting for black)
+            all_rows.append((i + 1, white_pgn, black_pgn))
         if self._current_half:
-            num = font_hist.render(f"{len(self._move_history)+1}.", True, TEXT_MUTED)
+            all_rows.append((len(self._move_history) + 1, self._current_half, ""))
+
+        # Show only the last max_rows rows so the latest move is always visible
+        visible = all_rows[-max_rows:]
+
+        y = panel_top
+        for move_num, white_pgn, black_pgn in visible:
+            num = font_hist.render(f"{move_num}.", True, TEXT_MUTED)
             surf.blit(num, (HIST_X + 4, y))
-            wt = font_hist.render(self._current_half, True, ACCENT)
+            w_color = ACCENT if black_pgn == "" else TEXT_DARK
+            wt = font_hist.render(white_pgn, True, w_color)
             surf.blit(wt, (HIST_X + 26, y))
+            if black_pgn:
+                bt = font_hist.render(black_pgn, True, TEXT_DARK)
+                surf.blit(bt, (HIST_X + 66, y))
+            y += row_h
 
     # ------------------------------------------------------------------
     # Game over overlay

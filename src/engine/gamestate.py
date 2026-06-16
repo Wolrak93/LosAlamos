@@ -49,7 +49,7 @@ def get_game_outcome(board: BitBoard) -> GameOutcome | None:
 
     # Threefold repetition
     current_hash = compute_hash(board)
-    if board.position_history.count(current_hash) >= 2:
+    if board.position_history.count(current_hash) >= 3:
         return GameOutcome(GameResult.DRAW, "Dreifache Stellungswiederholung")
 
     # Insufficient material

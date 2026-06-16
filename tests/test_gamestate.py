@@ -70,11 +70,18 @@ def test_threefold_repetition():
     _place(b, Color.WHITE, PieceType.KING, 3)
     _place(b, Color.BLACK, PieceType.KING, 33)
     h = compute_hash(b)
-    b.position_history = [h, h]  # already seen twice, current = third
-    outcome = get_game_outcome(b)
-    assert outcome is not None
-    assert outcome.result == GameResult.DRAW
-    assert outcome.reason == "Dreifache Stellungswiederholung"
+
+    # 2 occurrences in history → not a threefold repetition draw (need 3)
+    b.position_history = [h, h]
+    outcome_two = get_game_outcome(b)
+    assert outcome_two is None or outcome_two.reason != "Dreifache Stellungswiederholung"
+
+    # 3 occurrences in history → draw
+    b.position_history = [h, h, h]
+    outcome_three = get_game_outcome(b)
+    assert outcome_three is not None
+    assert outcome_three.result == GameResult.DRAW
+    assert outcome_three.reason == "Dreifache Stellungswiederholung"
 
 
 def test_insufficient_material_lone_kings():
