@@ -196,7 +196,7 @@ def _gen_sliding_moves(board: BitBoard, color: Color, pt: PieceType,
     return moves
 
 
-def _find_king_sq(board: BitBoard, color: Color) -> int:
+def find_king_sq(board: BitBoard, color: Color) -> int:
     bb = board.pieces[color][PieceType.KING]
     return (bb & -bb).bit_length() - 1
 
@@ -219,7 +219,7 @@ def generate_legal_moves(board: BitBoard) -> list[Move]:
     for move in generate_pseudo_legal_moves(board):
         copy = board.copy()
         move.apply(copy)
-        king_sq = _find_king_sq(copy, move.color)
+        king_sq = find_king_sq(copy, move.color)
         if not is_square_attacked(copy, king_sq, opp):
             legal.append(move)
     return legal
