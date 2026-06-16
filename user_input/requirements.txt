@@ -1,0 +1,60 @@
+
+Projektname: LosAlamos
+
+Los Alamos ist eine Schachvariante. Sie wird auf einem 6x6 Feld gespielt mit folgenden Änderungen:
+ - es gibt keine Läufer
+ - es gibt keine Rochade
+ - Bauern können sich im ersten Zug nicht 2 Felder bewegen
+ - es gibt kein en passante
+ - Bauern können nicht zu Läufern promoten (da es keine Läufer gibt)
+
+ Projektart: privates Projekt (nutze mein privates Github)
+
+Experiment: Dieses Projekt ist ein Experiment. Du sollst in einigen Fällen von der globalen CLAUDE.md abweichen, damit ich testen kann, ob ich die Änderungen für alle zukünftigen Projekte einführen möchte.
+Folgendes soll in diesem Projekt anders laufen:
+1. Bis jetzt habe ich dich immer kleine Stücke des Projekts programmieren lassen, um dann intensiv selbst zu testen. Ich möchte probieren, ob ich dich größere Blöcke programmieren
+lassen kann. Im Master Branch darf nach wie vor nicht programmiert werden. Wir erstellen jemeinsam die ROADMAP, aber dann wirst du den ganzen Development Cycle auf einmal programmieren (im development branch). 
+Ich teste am Ende des Cycles und wenn ich zufrieden bin mergen wir in master. Der Ablauf ist also:
+ - Cycle startet im development branch
+ - wir machen zusammen einen Plan für diesen Cycle
+ - du programmierst diesen Plan im development branch in einem Rutsch durch
+ - ich teste
+ - wir mergen bei Erfolg in master oder verwerfen bei Misserfolg
+
+ 2. Bei GUI-lastigen Arbeiten sollst du das Superpowers Brainstorming Feature benutzen. Bis jetzt solltest du immer fragen, ob du es verwenden darfst, weil der Tokenverbrauch hoch ist. 
+ Allerdings bin ich jetzt in letzter Zeit nie in die Nähe der Token-Grenze gekommen und das Feature hat deutliche Verbesserung gebracht. Frage nicht nach, ob
+ du es benutzen kannst. Wenn es GUI Aufgaben gibt, benutze es einfach, um mir deine Pläne zu zeigen.
+
+keine weiteren Änderungen. Halte dich ansonsten an die globale CLAUDE.md
+
+
+Assets: Die Sprites für die Figuren findest du in user_input/assets. Bitte verwende diese Bilder.
+
+
+Grober Plan: Das ist der grobe Ablaufplan, bitte kläre alle Fragen, die du hast mit mir ab, und erstelle dann eine saubere ROADMAP.md
+
+Cycle 1:
+ - Das Programm startet in einem Main Menu
+    - dort kann man für Weiß und Schwarz Spieler auswählen (Mensch, RandomBot, GreedyBot)
+    - dort kann man dem Spieler oder Bot einen Namen geben
+    - dort kann man die Zeitkontrolle auswählen
+    - dort kann man ein Match starten
+    - dort hat man die option, mit anderer Startaufstellung zu starten
+ - ist das Spiel gestartet wird das Board gezeigt und es kann gespielt werden.
+    - als grobe Referenz benutze user_input/tcec.png
+
+Wichtig: Das Schachspiel ist voll funktionsfähig und die einfachen Bots funktionieren. Plane die interne Repräsentation
+des Boards gut durch mit mir. Dass das Board gut und schnell läuft wird in den nächsten Schritten wichtig.
+
+Cycle 2: Bots
+ - Schreibe ein paar evaluation functions (material, positional, complex?)
+ - und ein paar Suchalgorithmen (Tree-Search, Monte-Carlo)
+ - kreiere daruas gute Bots
+
+Cycle 3: Table Base
+ - erstelle eine Endgame Table Base und baue die Option ein, dass Bots diese benutzen können.
+ - die Tablebase soll bis 4 Figuren gehen, oder wenn es mein Computer schafft, bis 5 oder 6 Figuren
+
+Cycle 4: Neural Nets
+ - optional Feature
+ - erstelle einen wirklich starken Bots, der neural nets benutzt
