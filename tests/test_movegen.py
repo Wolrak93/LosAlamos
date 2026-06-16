@@ -1,6 +1,4 @@
-import pytest
 from engine.board import BitBoard, Color, PieceType
-from engine.move import Move
 from engine.movegen import generate_legal_moves, is_square_attacked
 
 
@@ -162,7 +160,6 @@ def test_king_cannot_move_into_check():
 # --- Check detection ---
 
 def test_is_square_attacked():
-    from engine.movegen import is_square_attacked
     b = BitBoard()
     _place(b, Color.BLACK, PieceType.ROOK, 3)   # d1
     # d-file squares are attacked by the rook

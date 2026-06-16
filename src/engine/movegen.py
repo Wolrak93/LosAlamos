@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from engine.board import BitBoard, Color, PieceType
 from engine.move import Move
 
