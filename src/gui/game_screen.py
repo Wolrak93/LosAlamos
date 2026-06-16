@@ -68,6 +68,10 @@ class GameScreen:
         self._promo_move_base: Move | None = None   # move without promotion set
         self._promo_sq: int | None = None           # the destination square
         self._promo_hover: int | None = None        # 0=Q, 1=R, 2=N
+        # Rects set by draw() — initialised here so handle_event() can safely reference them
+        self._back_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
+        self._new_game_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
+        self._menu_from_over_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         # Schedule bot if it moves first
         self._maybe_schedule_bot()
 
@@ -85,8 +89,7 @@ class GameScreen:
             pygame.time.set_timer(_BOT_MOVE_EVENT, 0)
             self._execute_bot_move()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if hasattr(self, "_back_rect") and self._back_rect.collidepoint(event.pos):
-                from gui.main_menu import MainMenuScreen
+            if self._back_rect.collidepoint(event.pos):
                 return MainMenuScreen(self._surf)
             self._handle_board_click(event.pos)
         elif event.type == pygame.MOUSEMOTION:
