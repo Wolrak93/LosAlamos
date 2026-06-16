@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
+
 from engine.board import BitBoard, Color, PieceType
 
 _FILE_NAMES = "abcdef"

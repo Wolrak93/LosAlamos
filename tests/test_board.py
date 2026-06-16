@@ -1,5 +1,4 @@
-import pytest
-from engine.board import BitBoard, Color, PieceType, PIECE_VALUES
+from engine.board import PIECE_VALUES, BitBoard, Color, PieceType
 from engine.move import Move
 
 
