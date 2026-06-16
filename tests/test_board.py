@@ -1,5 +1,8 @@
+from collections import Counter
+
 from engine.board import PIECE_VALUES, BitBoard, Color, PieceType
 from engine.move import Move
+from engine.positions import make_starting_board
 from engine.zobrist import compute_hash
 
 
@@ -172,3 +175,40 @@ def test_hash_same_position_same_hash():
     b2 = BitBoard()
     b2.set_piece(3, Color.WHITE, PieceType.KING)
     assert compute_hash(b1) == compute_hash(b2)
+
+
+def test_normal_starting_position():
+    b = make_starting_board("normal")
+    # White back rank: R-N-Q-K-N-R at squares 0-5
+    assert b.get_piece_at(0) == (Color.WHITE, PieceType.ROOK)
+    assert b.get_piece_at(1) == (Color.WHITE, PieceType.KNIGHT)
+    assert b.get_piece_at(2) == (Color.WHITE, PieceType.QUEEN)
+    assert b.get_piece_at(3) == (Color.WHITE, PieceType.KING)
+    assert b.get_piece_at(4) == (Color.WHITE, PieceType.KNIGHT)
+    assert b.get_piece_at(5) == (Color.WHITE, PieceType.ROOK)
+    # White pawns on rank 1 (squares 6-11)
+    for sq in range(6, 12):
+        assert b.get_piece_at(sq) == (Color.WHITE, PieceType.PAWN)
+    # Black back rank rank 5 (squares 30-35)
+    assert b.get_piece_at(30) == (Color.BLACK, PieceType.ROOK)
+    assert b.get_piece_at(33) == (Color.BLACK, PieceType.KING)
+    # Black pawns on rank 4 (squares 24-29)
+    for sq in range(24, 30):
+        assert b.get_piece_at(sq) == (Color.BLACK, PieceType.PAWN)
+
+
+def test_random_sym_same_back_ranks():
+    b = make_starting_board("random_sym")
+    white_back = [b.get_piece_at(sq)[1] for sq in range(6)]
+    black_back = [b.get_piece_at(sq)[1] for sq in range(30, 36)]
+    assert white_back == black_back
+
+
+def test_random_asym_piece_counts():
+    b = make_starting_board("random_asym")
+    # Each side must still have exactly 1K, 1Q, 2R, 2N
+    white_back = Counter(b.get_piece_at(sq)[1] for sq in range(6))
+    assert white_back[PieceType.KING] == 1
+    assert white_back[PieceType.QUEEN] == 1
+    assert white_back[PieceType.ROOK] == 2
+    assert white_back[PieceType.KNIGHT] == 2
