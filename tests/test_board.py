@@ -1,5 +1,6 @@
 from engine.board import PIECE_VALUES, BitBoard, Color, PieceType
 from engine.move import Move
+from engine.zobrist import compute_hash
 
 
 def test_piece_values():
@@ -140,3 +141,34 @@ def test_to_pgn_piece_capture():
     m = Move(from_sq=1, to_sq=14, piece=PieceType.KNIGHT, color=Color.WHITE,
              captured=PieceType.PAWN)
     assert m.to_pgn() == "Nxc3"
+
+
+def test_hash_empty_board():
+    board = BitBoard()
+    h = compute_hash(board)
+    assert isinstance(h, int)
+
+
+def test_hash_differs_by_piece():
+    b1 = BitBoard()
+    b1.set_piece(0, Color.WHITE, PieceType.KING)
+    b2 = BitBoard()
+    b2.set_piece(1, Color.WHITE, PieceType.KING)
+    assert compute_hash(b1) != compute_hash(b2)
+
+
+def test_hash_differs_by_side():
+    b1 = BitBoard()
+    b1.set_piece(3, Color.WHITE, PieceType.KING)
+    b1.side_to_move = Color.WHITE
+    b2 = b1.copy()
+    b2.side_to_move = Color.BLACK
+    assert compute_hash(b1) != compute_hash(b2)
+
+
+def test_hash_same_position_same_hash():
+    b1 = BitBoard()
+    b1.set_piece(3, Color.WHITE, PieceType.KING)
+    b2 = BitBoard()
+    b2.set_piece(3, Color.WHITE, PieceType.KING)
+    assert compute_hash(b1) == compute_hash(b2)
