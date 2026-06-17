@@ -54,9 +54,14 @@ class Dropdown:
         pygame.draw.rect(surface, BORDER, self.rect, 1, border_radius=3)
         txt = font.render(self.value, True, TEXT_DARK)
         surface.blit(txt, (self.rect.x + 6, self.rect.centery - txt.get_height() // 2))
-        # Arrow
-        arrow = font.render("▾", True, TEXT_MUTED)
-        surface.blit(arrow, (self.rect.right - 18, self.rect.centery - arrow.get_height() // 2))
+        # Arrow (drawn triangle — font glyph unreliable across systems)
+        ax = self.rect.right - 14
+        ay = self.rect.centery
+        pygame.draw.polygon(surface, TEXT_MUTED, [
+            (ax - 5, ay - 3),
+            (ax + 5, ay - 3),
+            (ax,     ay + 4),
+        ])
 
         if self.open:
             for i, opt_rect in enumerate(self._option_rects()):

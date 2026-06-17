@@ -226,7 +226,7 @@ class MainMenuScreen:
 
         # Start button
         pygame.draw.rect(surf, ACCENT, self._start_rect, border_radius=4)
-        bt = font_body.render("▶  Match starten", True, (255, 255, 255))
+        bt = font_body.render("Match starten", True, (255, 255, 255))
         surf.blit(bt, (self._start_rect.centerx - bt.get_width() // 2,
                        self._start_rect.centery - bt.get_height() // 2))
 
