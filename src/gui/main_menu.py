@@ -11,8 +11,6 @@ from gui.constants import (
     ACCENT,
     ACCENT_LIGHT,
     BG,
-    BOARD_DARK,
-    BOARD_LIGHT,
     BORDER,
     CARD_BG,
     TEXT_DARK,
@@ -37,7 +35,6 @@ class GameConfig:
 _BOT_OPTIONS = ["Mensch", "RandomBot", "GreedyBot"]
 _POS_OPTIONS = ["Normal", "Sym. Zufall", "Asym. Zufall"]
 _POS_MODES = ["normal", "random_sym", "random_asym"]
-_MINI_SQ = 14  # mini board square size
 
 
 def _make_bot(option: str, name: str) -> Bot | None:
@@ -238,9 +235,6 @@ class MainMenuScreen:
         lbl = font_label.render("AUFSTELLUNG", True, TEXT_MUTED)
         surf.blit(lbl, (right_x, 160))
 
-        # Mini board (decorative)
-        self._draw_mini_board(surf, right_x, 180)
-
         # Position buttons
         for i, (r, label) in enumerate(zip(self._pos_rects, _POS_OPTIONS)):
             bg = ACCENT_LIGHT if i == self._pos_selected else CARD_BG
@@ -262,11 +256,3 @@ class MainMenuScreen:
             cx = rect.x + 6 + t.get_width() + 2
             pygame.draw.line(surf, TEXT_DARK, (cx, rect.y + 4), (cx, rect.bottom - 4), 1)
 
-    def _draw_mini_board(self, surf, x, y) -> None:
-        sq = _MINI_SQ
-        for rank in range(5, -1, -1):
-            for file in range(6):
-                color = BOARD_LIGHT if (rank + file) % 2 == 0 else BOARD_DARK
-                rx = x + file * sq
-                ry = y + (5 - rank) * sq
-                pygame.draw.rect(surf, color, (rx, ry, sq, sq))
