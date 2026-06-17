@@ -221,6 +221,10 @@ class GameScreen:
                 color = HIGHLIGHT_SEL
             elif sq in legal_dests or sq in capture_dests:
                 color = HIGHLIGHT_LEGAL
+            elif self._last_move and sq == self._last_move[1]:
+                color = HIGHLIGHT_LAST_TO
+            elif self._last_move and sq == self._last_move[0]:
+                color = HIGHLIGHT_LAST_FROM
             else:
                 color = base_color
             pygame.draw.rect(surf, color, (x, y, SQ_SIZE, SQ_SIZE))
