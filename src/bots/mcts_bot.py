@@ -21,7 +21,9 @@ _NORM_MAX = 3000.0
 class _Node:
     __slots__ = ("board", "parent", "move", "children", "visits", "total_score", "untried_moves")
 
-    def __init__(self, board: BitBoard, parent: _Node | None = None, move: Move | None = None) -> None:
+    def __init__(
+        self, board: BitBoard, parent: _Node | None = None, move: Move | None = None
+    ) -> None:
         self.board = board
         self.parent = parent
         self.move = move
@@ -76,7 +78,8 @@ class MCTSBot(Bot):
                     win_rate = best.total_score / best.visits
                     eval_cp = (win_rate - 0.5) * 2 * _NORM_MAX
                     progress.sims = total_sims
-                    progress.eval = eval_cp / 100.0 if root_side == Color.WHITE else -eval_cp / 100.0
+                    sign = 1.0 if root_side == Color.WHITE else -1.0
+                    progress.eval = sign * eval_cp / 100.0
 
         if not root.children:
             return generate_legal_moves(board)[0]

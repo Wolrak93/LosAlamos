@@ -1,4 +1,6 @@
 # tests/test_personalities.py
+from bots.mcts_bot import MCTSBot
+from bots.minimax_bot import MinimaxBot
 from bots.personalities import (
     ALL_SCIENTISTS,
     calculate_time_budget,
@@ -9,12 +11,9 @@ from bots.personalities import (
     create_teller,
     create_von_neumann,
 )
-from bots.minimax_bot import MinimaxBot
-from bots.mcts_bot import MCTSBot
-from engine.gamestate import get_game_outcome
+from engine.gamestate import get_game_outcome, play_move
 from engine.movegen import generate_legal_moves
 from engine.positions import make_starting_board
-from engine.gamestate import play_move
 
 
 def test_all_factories_create_correct_types():

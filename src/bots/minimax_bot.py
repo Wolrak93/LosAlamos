@@ -85,7 +85,9 @@ def _negamax(
     return best
 
 
-def _quiescence(board: BitBoard, alpha: int, beta: int, evaluator: Evaluator, depth: int = 4) -> int:
+def _quiescence(
+    board: BitBoard, alpha: int, beta: int, evaluator: Evaluator, depth: int = 4
+) -> int:
     raw = evaluator.evaluate(board)
     stand_pat = raw if board.side_to_move == Color.WHITE else -raw
 
@@ -144,7 +146,9 @@ class MinimaxBot(Bot):
             best_move = generate_legal_moves(board)[0]
         return best_move
 
-    def _search_root(self, board: BitBoard, depth: int, deadline: float, tt: dict) -> tuple[Move, int] | None:
+    def _search_root(
+        self, board: BitBoard, depth: int, deadline: float, tt: dict
+    ) -> tuple[Move, int] | None:
         moves = generate_legal_moves(board)
         moves.sort(key=_mvv_lva, reverse=True)
         best_move: Move | None = None
@@ -155,7 +159,9 @@ class MinimaxBot(Bot):
                 return None
             child = board.copy()
             play_move(child, move)
-            score = -_negamax(child, depth - 1, -_MATE - 1, -alpha, self._evaluator, tt, deadline, ply=1)
+            score = -_negamax(
+                child, depth - 1, -_MATE - 1, -alpha, self._evaluator, tt, deadline, ply=1
+            )
             if score > alpha:
                 alpha = score
                 best_move = move

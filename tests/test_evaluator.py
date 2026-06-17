@@ -84,5 +84,9 @@ def test_mobility_additivity():
     ev_pos = Evaluator(material=True, positional=True)
     ev_mob = Evaluator(material=True, mobility=True)
     ev_all = Evaluator(material=True, positional=True, mobility=True)
-    expected = ev_mat.evaluate(b) + (ev_pos.evaluate(b) - ev_mat.evaluate(b)) + (ev_mob.evaluate(b) - ev_mat.evaluate(b))
+    expected = (
+        ev_mat.evaluate(b)
+        + (ev_pos.evaluate(b) - ev_mat.evaluate(b))
+        + (ev_mob.evaluate(b) - ev_mat.evaluate(b))
+    )
     assert ev_all.evaluate(b) == expected
