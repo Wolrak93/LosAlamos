@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from engine.board import PIECE_VALUES, BitBoard, Color, PieceType
+from engine.movegen import generate_legal_moves
 
 _CP = 100  # centipawn multiplier (PIECE_VALUES use pawn=1; we work in centipawns)
 
@@ -90,6 +91,8 @@ class Evaluator:
             score += self._material_score(board)
         if self._positional:
             score += self._positional_score(board)
+        if self._mobility:
+            score += self._mobility_score(board)
         return score
 
     def _material_score(self, board: BitBoard) -> int:
@@ -123,3 +126,15 @@ class Evaluator:
                 score -= pst[mirrored]
                 bb ^= lsb
         return score
+
+    def _mobility_score(self, board: BitBoard) -> int:
+        own_moves = len(generate_legal_moves(board))
+
+        opp_board = board.copy()
+        opp_board.side_to_move = Color(1 - int(board.side_to_move))
+        opp_moves = len(generate_legal_moves(opp_board))
+
+        diff = own_moves - opp_moves
+        if board.side_to_move == Color.BLACK:
+            diff = -diff
+        return diff * 10  # 10 centipawns per extra legal move

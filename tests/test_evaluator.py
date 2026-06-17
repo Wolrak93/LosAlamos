@@ -61,3 +61,28 @@ def test_positional_symmetric_scores_zero():
     b.set_piece(20, Color.BLACK, PieceType.KNIGHT)  # c4 (mirror of c3)
     ev = Evaluator(material=True, positional=True)
     assert ev.evaluate(b) == 0
+
+
+def test_mobility_more_moves_scores_higher():
+    # White queen in center has many moves; black has only king
+    b = _empty_board()
+    b.set_piece(21, Color.WHITE, PieceType.QUEEN)   # d4 — many moves
+    ev = Evaluator(material=True, mobility=True)
+    score_with_queen = ev.evaluate(b)
+
+    b2 = _empty_board()
+    ev2 = Evaluator(material=True, mobility=True)
+    score_kings_only = ev2.evaluate(b2)
+
+    assert score_with_queen > score_kings_only
+
+
+def test_mobility_additivity():
+    b = _empty_board()
+    b.set_piece(14, Color.WHITE, PieceType.KNIGHT)
+    ev_mat = Evaluator(material=True)
+    ev_pos = Evaluator(material=True, positional=True)
+    ev_mob = Evaluator(material=True, mobility=True)
+    ev_all = Evaluator(material=True, positional=True, mobility=True)
+    expected = ev_mat.evaluate(b) + (ev_pos.evaluate(b) - ev_mat.evaluate(b)) + (ev_mob.evaluate(b) - ev_mat.evaluate(b))
+    assert ev_all.evaluate(b) == expected
