@@ -7,6 +7,7 @@ import time
 
 from bots.base import Bot
 from bots.evaluator import Evaluator
+from bots.progress import BotProgress
 from engine.board import BitBoard, Color
 from engine.gamestate import GameResult, get_game_outcome, play_move
 from engine.move import Move
@@ -48,18 +49,34 @@ class MCTSBot(Bot):
         super().__init__(name)
         self._evaluator = evaluator
 
-    def choose_move(self, board: BitBoard, time_budget_seconds: float | None = None) -> Move:
+    def choose_move(
+        self,
+        board: BitBoard,
+        time_budget_seconds: float | None = None,
+        progress: BotProgress | None = None,
+    ) -> Move:
         budget = 120.0 if time_budget_seconds is None else time_budget_seconds
         deadline = time.monotonic() + budget * 0.9
         root = _Node(board.copy())
+        root_side = board.side_to_move
+        total_sims = 0
 
         while time.monotonic() < deadline:
             node = self._select(root)
             outcome = get_game_outcome(node.board)
             if outcome is None and node.untried_moves:
                 node = self._expand(node)
-            score = self._simulate(node, board.side_to_move)
+            score = self._simulate(node, root_side)
             self._backpropagate(node, score)
+            total_sims += 1
+
+            if progress is not None and total_sims % 100 == 0 and root.children:
+                best = max(root.children, key=lambda c: c.visits)
+                if best.visits > 0:
+                    win_rate = best.total_score / best.visits
+                    eval_cp = (win_rate - 0.5) * 2 * _NORM_MAX
+                    progress.sims = total_sims
+                    progress.eval = eval_cp / 100.0 if root_side == Color.WHITE else -eval_cp / 100.0
 
         if not root.children:
             return generate_legal_moves(board)[0]

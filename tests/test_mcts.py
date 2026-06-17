@@ -41,3 +41,16 @@ def test_mcts_respects_time_budget():
     bot.choose_move(board, time_budget_seconds=1.0)
     elapsed = time.monotonic() - start
     assert elapsed < 3.0
+
+
+def test_mcts_writes_progress():
+    from bots.progress import BotProgress
+    board = make_starting_board()
+    bot = _make_mcts()
+    p = BotProgress()
+    bot.choose_move(board, time_budget_seconds=1.0, progress=p)
+    # 1 second is enough for >100 simulations
+    assert p.sims is not None
+    assert p.sims >= 100
+    assert p.eval is not None
+    assert isinstance(p.eval, float)
