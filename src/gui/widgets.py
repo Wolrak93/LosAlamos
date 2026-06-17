@@ -60,7 +60,7 @@ class Dropdown:
         pygame.draw.polygon(surface, TEXT_MUTED, [
             (ax - 5, ay - 3),
             (ax + 5, ay - 3),
-            (ax,     ay + 4),
+            (ax, ay + 4),
         ])
 
         if self.open:
