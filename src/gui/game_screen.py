@@ -563,14 +563,16 @@ class GameScreen:
         visible = all_rows[-max_rows:]
 
         y = panel_top
-        for move_num, white_pgn, black_pgn in visible:
+        for idx, (move_num, white_pgn, black_pgn) in enumerate(visible):
+            is_last_row = (idx == len(visible) - 1)
             num = font_hist.render(f"{move_num}.", True, TEXT_MUTED)
             surf.blit(num, (HIST_X + 4, y))
-            w_color = ACCENT if black_pgn == "" else TEXT_DARK
+            w_color = ACCENT if (is_last_row and black_pgn == "") else TEXT_DARK
             wt = font_hist.render(white_pgn, True, w_color)
             surf.blit(wt, (HIST_X + 26, y))
             if black_pgn:
-                bt = font_hist.render(black_pgn, True, TEXT_DARK)
+                b_color = ACCENT if is_last_row else TEXT_DARK
+                bt = font_hist.render(black_pgn, True, b_color)
                 surf.blit(bt, (HIST_X + 66, y))
             y += row_h
 
