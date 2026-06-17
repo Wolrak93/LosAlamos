@@ -198,14 +198,12 @@ class MainMenuScreen:
         # White section
         lbl = font_label.render("WEISS", True, TEXT_MUTED)
         surf.blit(lbl, (left_x, 140))
-        self._white_type_dd.draw(surf)
         self._draw_input(surf, self._white_name_rect, self._white_name,
                          self._active_input == "white", font_body)
 
         # Black section
         lbl = font_label.render("SCHWARZ", True, TEXT_MUTED)
         surf.blit(lbl, (left_x, 240))
-        self._black_type_dd.draw(surf)
         self._draw_input(surf, self._black_name_rect, self._black_name,
                          self._active_input == "black", font_body)
 
@@ -243,6 +241,10 @@ class MainMenuScreen:
             pygame.draw.rect(surf, border, r, 1, border_radius=3)
             t = font_body.render(label, True, ACCENT if i == self._pos_selected else TEXT_DARK)
             surf.blit(t, (r.centerx - t.get_width() // 2, r.centery - t.get_height() // 2))
+
+        # Dropdowns drawn last so open lists render on top of all other elements
+        self._white_type_dd.draw(surf)
+        self._black_type_dd.draw(surf)
 
     def _draw_input(self, surf, rect, text, active, font, placeholder=""):
         pygame.draw.rect(surf, CARD_BG, rect, border_radius=3)
