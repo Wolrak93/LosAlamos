@@ -62,6 +62,25 @@ def _net_captured_count(board, color: Color, pt: PieceType) -> int:
     return max(0, color_remaining - opp_remaining)
 
 
+def _next_selection(
+    selected_sq: int | None,
+    sq: int,
+    piece_info: tuple[Color, PieceType] | None,
+    color: Color,
+) -> int | None:
+    """Returns the square to select after a board click, or None to deselect.
+
+    Selecting the already-selected square deselects it. Clicking a different
+    own piece switches the selection. Clicking an empty square or opponent
+    piece deselects.
+    """
+    if piece_info is not None and piece_info[0] == color:
+        if sq == selected_sq:
+            return None
+        return sq
+    return None
+
+
 class GameScreen:
     def __init__(self, surface: pygame.Surface, config: GameConfig) -> None:
         self._surf = surface
@@ -251,11 +270,8 @@ class GameScreen:
                 self._selected_sq = None
                 return
 
-        # Select own piece
-        if piece_info is not None and piece_info[0] == color:
-            self._selected_sq = sq
-        else:
-            self._selected_sq = None
+        # Select own piece (deselects on re-click)
+        self._selected_sq = _next_selection(self._selected_sq, sq, piece_info, color)
 
     def _make_move(self, move: Move) -> None:
         pgn = move.to_pgn()

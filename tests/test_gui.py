@@ -1,7 +1,7 @@
 from bots.greedy_bot import GreedyBot
 from bots.random_bot import RandomBot
 from engine.board import BitBoard, Color, PieceType
-from gui.game_screen import _is_evaluating_bot, _net_captured_count
+from gui.game_screen import _is_evaluating_bot, _net_captured_count, _next_selection
 
 
 def test_human_is_not_evaluating():
@@ -45,3 +45,56 @@ def test_net_captured_black_advantage():
     board = _board_with(white_pawns=3, black_pawns=5)
     assert _net_captured_count(board, Color.WHITE, PieceType.PAWN) == 0
     assert _net_captured_count(board, Color.BLACK, PieceType.PAWN) == 2
+
+
+def test_reclick_selected_piece_deselects():
+    # Clicking the same square as the selected piece should deselect
+    result = _next_selection(
+        selected_sq=5,
+        sq=5,
+        piece_info=(Color.WHITE, PieceType.PAWN),
+        color=Color.WHITE,
+    )
+    assert result is None
+
+
+def test_click_different_own_piece_selects():
+    # Clicking a different own piece while another is selected → switch
+    result = _next_selection(
+        selected_sq=5,
+        sq=12,
+        piece_info=(Color.WHITE, PieceType.ROOK),
+        color=Color.WHITE,
+    )
+    assert result == 12
+
+
+def test_click_empty_square_deselects():
+    result = _next_selection(
+        selected_sq=5,
+        sq=8,
+        piece_info=None,
+        color=Color.WHITE,
+    )
+    assert result is None
+
+
+def test_click_opponent_piece_deselects():
+    result = _next_selection(
+        selected_sq=5,
+        sq=20,
+        piece_info=(Color.BLACK, PieceType.PAWN),
+        color=Color.WHITE,
+    )
+    assert result is None
+
+
+def test_first_click_own_piece_selects():
+    # No prior selection (selected_sq=None)
+    result = _next_selection(
+        selected_sq=None,
+        sq=10,
+        piece_info=(Color.BLACK, PieceType.KNIGHT),
+        color=Color.BLACK,
+    )
+    assert result == 10
