@@ -40,6 +40,9 @@ Thumbs.db
 tablebase/
 *.tb
 
+# Brainstorming session files
+.superpowers/
+
 # Trained models (large — Cycle 4)
 models/
 *.pt
