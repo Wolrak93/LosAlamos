@@ -486,6 +486,32 @@ class GameScreen:
         vt = font.render(val_str, True, ACCENT)
         surf.blit(vt, (rect.right + 4, rect.centery - vt.get_height() // 2))
 
+    def _calc_eval_diff(self) -> int:
+        white_mat = sum(
+            bin(self._board.pieces[Color.WHITE][pt]).count("1") * PIECE_VALUES[pt]
+            for pt in PieceType if pt != PieceType.KING
+        )
+        black_mat = sum(
+            bin(self._board.pieces[Color.BLACK][pt]).count("1") * PIECE_VALUES[pt]
+            for pt in PieceType if pt != PieceType.KING
+        )
+        return white_mat - black_mat
+
+    def _draw_captured_images(self, surf: pygame.Surface, x: int, y: int,
+                               color: Color, icon_size: int = 16) -> None:
+        from gui.assets import get_small_sprite
+        opp = Color(1 - int(color))
+        starting = {PieceType.PAWN: 6, PieceType.KNIGHT: 2,
+                    PieceType.ROOK: 2, PieceType.QUEEN: 1}
+        cursor_x = x
+        for pt in (PieceType.QUEEN, PieceType.ROOK, PieceType.KNIGHT, PieceType.PAWN):
+            remaining = bin(self._board.pieces[opp][pt]).count("1")
+            captured = starting.get(pt, 0) - remaining
+            for _ in range(captured):
+                img = get_small_sprite(opp, pt, icon_size)
+                surf.blit(img, (cursor_x, y))
+                cursor_x += icon_size + 1
+
     # ------------------------------------------------------------------
     # Move history panel
 
