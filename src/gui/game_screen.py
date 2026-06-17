@@ -116,7 +116,7 @@ class GameScreen:
         # Bot threading
         self._bot_thread: threading.Thread | None = None
         self._bot_progress: BotProgress | None = None
-        self._bot_result: list = [None]
+        self._bot_result: list[Move | None] = [None]
         self._last_eval: dict[Color, float | None] = {
             Color.WHITE: None,
             Color.BLACK: None,
