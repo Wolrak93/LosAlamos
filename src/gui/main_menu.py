@@ -6,6 +6,14 @@ import pygame
 
 from bots.base import Bot
 from bots.greedy_bot import GreedyBot
+from bots.personalities import (
+    create_bethe,
+    create_fermi,
+    create_feynman,
+    create_oppenheimer,
+    create_teller,
+    create_von_neumann,
+)
 from bots.random_bot import RandomBot
 from gui.constants import (
     ACCENT,
@@ -18,7 +26,7 @@ from gui.constants import (
     WINDOW_W,
     get_font,
 )
-from gui.widgets import Dropdown
+from gui.widgets import GroupedDropdown
 
 
 @dataclass
@@ -32,7 +40,30 @@ class GameConfig:
     starting_mode: str          # "normal", "random_sym", "random_asym"
 
 
-_BOT_OPTIONS = ["Mensch", "RandomBot", "GreedyBot"]
+_SCIENTIST_FACTORIES = {
+    "Fermi":        create_fermi,
+    "von Neumann":  create_von_neumann,
+    "Oppenheimer":  create_oppenheimer,
+    "Feynman":      create_feynman,
+    "Teller":       create_teller,
+    "Bethe":        create_bethe,
+}
+
+_DROPDOWN_ENTRIES: list[tuple[bool, str, str]] = [
+    (True,  "── MENSCH ──",          ""),
+    (False, "Mensch",                 ""),
+    (True,  "── BASIS-BOTS ──",      ""),
+    (False, "RandomBot",              ""),
+    (False, "GreedyBot",              ""),
+    (True,  "── WISSENSCHAFTLER ──", ""),
+    (False, "Fermi",        "Minimax · Material"),
+    (False, "von Neumann",  "Minimax · +Pos"),
+    (False, "Oppenheimer",  "Minimax · +Mob"),
+    (False, "Feynman",      "MCTS · Material"),
+    (False, "Teller",       "MCTS · +Pos"),
+    (False, "Bethe",        "MCTS · +Mob"),
+]
+
 _POS_OPTIONS = ["Normal", "Sym. Zufall", "Asym. Zufall"]
 _POS_MODES = ["normal", "random_sym", "random_asym"]
 
@@ -42,7 +73,9 @@ def _make_bot(option: str, name: str) -> Bot | None:
         return RandomBot(name)
     if option == "GreedyBot":
         return GreedyBot(name)
-    return None
+    if option in _SCIENTIST_FACTORIES:
+        return _SCIENTIST_FACTORIES[option](name)
+    return None  # "Mensch"
 
 
 class MainMenuScreen:
@@ -57,14 +90,14 @@ class MainMenuScreen:
         gap = 8
 
         # White player
-        self._white_type_dd = Dropdown(
-            pygame.Rect(left_x, 160, 200, row_h), _BOT_OPTIONS, 0)
+        self._white_type_dd = GroupedDropdown(
+            pygame.Rect(left_x, 160, 200, row_h), _DROPDOWN_ENTRIES, 0)
         self._white_name_rect = pygame.Rect(left_x, 160 + row_h + gap, 200, row_h)
         self._white_name = "Weiß"
 
         # Black player
-        self._black_type_dd = Dropdown(
-            pygame.Rect(left_x, 260, 200, row_h), _BOT_OPTIONS, 0)
+        self._black_type_dd = GroupedDropdown(
+            pygame.Rect(left_x, 260, 200, row_h), _DROPDOWN_ENTRIES, 0)
         self._black_name_rect = pygame.Rect(left_x, 260 + row_h + gap, 200, row_h)
         self._black_name = "Schwarz"
 
