@@ -350,6 +350,7 @@ class GameScreen:
         font_md = get_font("serif", 14)
         font_clock = get_font("monospace", 16)
         font_label = get_font("serif", 10)
+        font_eval = get_font("monospace", 24)
 
         panel_rect = pygame.Rect(INFO_X, 0, INFO_W, WINDOW_H)
         pygame.draw.rect(surf, CARD_BG, panel_rect)
@@ -359,7 +360,7 @@ class GameScreen:
         active = self._board.side_to_move
         y = 12
 
-        def draw_player(color: Color, name: str, bot_label: str) -> int:
+        def draw_player(color: Color, name: str, bot_label: str, evaluating: bool) -> int:
             nonlocal y
             is_active = (color == active and self._outcome is None)
             # Name + type
@@ -383,80 +384,66 @@ class GameScreen:
                 surf.blit(ct, (cr.centerx - ct.get_width() // 2,
                                cr.centery - ct.get_height() // 2))
             y += 6
-            # Captured pieces
-            captured_str = self._captured_display(color)
-            if captured_str:
-                ct2 = font_md.render(captured_str, True, TEXT_MUTED)
-                surf.blit(ct2, (INFO_X + 8, y))
+            # Captured pieces as sprite images (no +N text)
+            self._draw_captured_images(surf, INFO_X + 8, y, color)
             y += 20
-            # Eval bar
-            lbl = font_label.render(
-                f"EVAL {'WEISS' if color == Color.WHITE else 'SCHWARZ'}",
-                True, TEXT_MUTED
-            )
-            surf.blit(lbl, (INFO_X + 8, y))
-            y += lbl.get_height() + 3
-            self._draw_eval_bar(surf, pygame.Rect(INFO_X + 8, y, INFO_W - 16, 8), color)
-            y += 14
+            # Eval: only for evaluating bots
+            if evaluating:
+                lbl = font_label.render(
+                    f"EVAL {'WEISS' if color == Color.WHITE else 'SCHWARZ'}",
+                    True, TEXT_MUTED
+                )
+                surf.blit(lbl, (INFO_X + 8, y))
+                y += lbl.get_height() + 3
+                self._draw_eval_bar(surf, pygame.Rect(INFO_X + 8, y, INFO_W - 16, 8), color)
+                y += 14
+                # Large eval number
+                diff = self._calc_eval_diff()
+                sign = "+" if diff > 0 else ""
+                eval_str = f"{sign}{diff:.2f}"
+                if diff > 0:
+                    eval_color = ACCENT
+                elif diff < 0:
+                    eval_color = (160, 60, 60)
+                else:
+                    eval_color = TEXT_MUTED
+                et = font_eval.render(eval_str, True, eval_color)
+                surf.blit(et, (INFO_X + INFO_W // 2 - et.get_width() // 2, y))
+                y += et.get_height() + 6
             return y
 
         # Black at top
+        black_bot = self._config.black_bot
         black_bot_label = (
-            f"{type(self._config.black_bot).__name__} · Schwarz"
-            if self._config.black_bot
+            f"{type(black_bot).__name__} · Schwarz"
+            if black_bot
             else "Mensch · Schwarz"
         )
         draw_player(Color.BLACK,
                     self._config.black_name,
-                    black_bot_label)
+                    black_bot_label,
+                    evaluating=_is_evaluating_bot(black_bot))
 
-        # Divider + back button
-        pygame.draw.line(surf, BORDER, (INFO_X + 8, y), (INFO_X + INFO_W - 8, y), 1)
-        y += 8
-        back_rect = pygame.Rect(INFO_X + 8, y, INFO_W - 16, 28)
+        # White
+        white_bot = self._config.white_bot
+        white_bot_label = (
+            f"{type(white_bot).__name__} · Weiß"
+            if white_bot
+            else "Mensch · Weiß"
+        )
+        draw_player(Color.WHITE,
+                    self._config.white_name,
+                    white_bot_label,
+                    evaluating=_is_evaluating_bot(white_bot))
+
+        # Back button pinned to panel bottom
+        back_rect = pygame.Rect(INFO_X + 8, WINDOW_H - 44, INFO_W - 16, 28)
         pygame.draw.rect(surf, CARD_BG, back_rect, border_radius=3)
         pygame.draw.rect(surf, BORDER, back_rect, 1, border_radius=3)
         bt2 = font_sm.render("← Zurück zum Menü", True, TEXT_MUTED)
         surf.blit(bt2, (back_rect.centerx - bt2.get_width() // 2,
                         back_rect.centery - bt2.get_height() // 2))
         self._back_rect = back_rect
-        y += 36
-        pygame.draw.line(surf, BORDER, (INFO_X + 8, y), (INFO_X + INFO_W - 8, y), 1)
-        y += 8
-
-        # White at bottom
-        white_bot_label = (
-            f"{type(self._config.white_bot).__name__} · Weiß"
-            if self._config.white_bot
-            else "Mensch · Weiß"
-        )
-        draw_player(Color.WHITE,
-                    self._config.white_name,
-                    white_bot_label)
-
-    def _captured_display(self, capturing_color: Color) -> str:
-        opp = Color(1 - int(capturing_color))
-        # Count opponent pieces remaining vs starting count
-        starting = {PieceType.PAWN: 6, PieceType.KNIGHT: 2,
-                    PieceType.ROOK: 2, PieceType.QUEEN: 1}
-        symbols = {
-            PieceType.PAWN: "♟" if capturing_color == Color.WHITE else "♙",
-            PieceType.KNIGHT: "♞" if capturing_color == Color.WHITE else "♘",
-            PieceType.ROOK: "♜" if capturing_color == Color.WHITE else "♖",
-            PieceType.QUEEN: "♛" if capturing_color == Color.WHITE else "♕",
-        }
-        parts = []
-        adv = 0
-        for pt in (PieceType.QUEEN, PieceType.ROOK, PieceType.KNIGHT, PieceType.PAWN):
-            remaining = bin(self._board.pieces[opp][pt]).count("1")
-            captured = starting.get(pt, 0) - remaining
-            if captured > 0:
-                parts.append(symbols[pt] * captured)
-                adv += captured * PIECE_VALUES[pt]
-        result = "".join(parts)
-        if adv > 0:
-            result += f" +{adv}"
-        return result
 
     def _draw_eval_bar(self, surf: pygame.Surface, rect: pygame.Rect,
                        color: Color) -> None:
