@@ -22,6 +22,7 @@ _FILE_NAMES = {
 }
 
 _sprites: dict[tuple[Color, PieceType], pygame.Surface] = {}
+_small_sprites: dict[tuple[Color, PieceType, int], pygame.Surface] = {}
 
 
 def load_sprites(sq_size: int) -> None:
@@ -33,3 +34,11 @@ def load_sprites(sq_size: int) -> None:
 
 def get_sprite(color: Color, pt: PieceType) -> pygame.Surface:
     return _sprites[(color, pt)]
+
+
+def get_small_sprite(color: Color, pt: PieceType, size: int) -> pygame.Surface:
+    key = (color, pt, size)
+    if key not in _small_sprites:
+        base = _sprites[(color, pt)]
+        _small_sprites[key] = pygame.transform.smoothscale(base, (size, size))
+    return _small_sprites[key]
