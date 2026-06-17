@@ -311,6 +311,10 @@ class GameScreen:
                 self._promo_move_base = None
                 self._promo_hover = None
                 self._make_move(move)
+            else:
+                self._promo_sq = None
+                self._promo_move_base = None
+                self._promo_hover = None
 
     def _promo_circle_rects(self) -> list[pygame.Rect]:
         assert self._promo_sq is not None
