@@ -50,6 +50,18 @@ def _is_evaluating_bot(bot) -> bool:
     return bot is not None and not isinstance(bot, RandomBot)
 
 
+def _net_captured_count(board, color: Color, pt: PieceType) -> int:
+    """Returns how many more pieces of type pt color has captured than the opponent.
+
+    Derivation: net = color_remaining - opp_remaining
+    (starting counts cancel out in the difference)
+    """
+    opp = Color(1 - int(color))
+    color_remaining = bin(board.pieces[color][pt]).count("1")
+    opp_remaining = bin(board.pieces[opp][pt]).count("1")
+    return max(0, color_remaining - opp_remaining)
+
+
 class GameScreen:
     def __init__(self, surface: pygame.Surface, config: GameConfig) -> None:
         self._surf = surface
@@ -487,13 +499,10 @@ class GameScreen:
                                color: Color, icon_size: int = 16) -> None:
         from gui.assets import get_small_sprite
         opp = Color(1 - int(color))
-        starting = {PieceType.PAWN: 6, PieceType.KNIGHT: 2,
-                    PieceType.ROOK: 2, PieceType.QUEEN: 1}
         cursor_x = x
         for pt in (PieceType.QUEEN, PieceType.ROOK, PieceType.KNIGHT, PieceType.PAWN):
-            remaining = bin(self._board.pieces[opp][pt]).count("1")
-            captured = starting.get(pt, 0) - remaining
-            for _ in range(captured):
+            net = _net_captured_count(self._board, color, pt)
+            for _ in range(net):
                 img = get_small_sprite(opp, pt, icon_size)
                 surf.blit(img, (cursor_x, y))
                 cursor_x += icon_size + 1

@@ -1,6 +1,7 @@
 from bots.greedy_bot import GreedyBot
 from bots.random_bot import RandomBot
-from gui.game_screen import _is_evaluating_bot
+from engine.board import BitBoard, Color, PieceType
+from gui.game_screen import _is_evaluating_bot, _net_captured_count
 
 
 def test_human_is_not_evaluating():
@@ -13,3 +14,34 @@ def test_random_bot_is_not_evaluating():
 
 def test_greedy_bot_is_evaluating():
     assert _is_evaluating_bot(GreedyBot("g")) is True
+
+
+def _board_with(white_pawns: int, black_pawns: int) -> BitBoard:
+    """Minimal board with only pawns set for the two sides."""
+    board = BitBoard()
+    for i in range(white_pawns):
+        board.set_piece(i, Color.WHITE, PieceType.PAWN)
+    for i in range(black_pawns):
+        board.set_piece(i + 10, Color.BLACK, PieceType.PAWN)
+    return board
+
+
+def test_net_captured_equal_shows_zero():
+    # Both sides have 4 pawns remaining — no advantage for either
+    board = _board_with(white_pawns=4, black_pawns=4)
+    assert _net_captured_count(board, Color.WHITE, PieceType.PAWN) == 0
+    assert _net_captured_count(board, Color.BLACK, PieceType.PAWN) == 0
+
+
+def test_net_captured_white_advantage():
+    # White has 4 pawns, Black has 3 → white captured one more pawn net
+    board = _board_with(white_pawns=4, black_pawns=3)
+    assert _net_captured_count(board, Color.WHITE, PieceType.PAWN) == 1
+    assert _net_captured_count(board, Color.BLACK, PieceType.PAWN) == 0
+
+
+def test_net_captured_black_advantage():
+    # White has 3 pawns, Black has 5 → black shows 2
+    board = _board_with(white_pawns=3, black_pawns=5)
+    assert _net_captured_count(board, Color.WHITE, PieceType.PAWN) == 0
+    assert _net_captured_count(board, Color.BLACK, PieceType.PAWN) == 2
