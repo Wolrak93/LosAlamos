@@ -377,7 +377,11 @@ class GameScreen:
         bot = self._config.white_bot if color == Color.WHITE else self._config.black_bot
         if bot is None or not self._legal_moves:
             return
-        move = bot.choose_move(self._board)
+        from bots.personalities import calculate_time_budget
+        remaining = self._clocks[color] if self._use_clock else None
+        move_number = self._board.ply // 2 + 1
+        budget = calculate_time_budget(remaining, move_number, self._increment)
+        move = bot.choose_move(self._board, budget)
         self._make_move(move)
 
     # ------------------------------------------------------------------
