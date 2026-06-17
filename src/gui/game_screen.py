@@ -567,6 +567,14 @@ class GameScreen:
                 surf.blit(bt, (HIST_X + 66, y))
             y += row_h
 
+        # 50-move rule counter
+        y_counter = WINDOW_H - 60
+        lbl_50 = font_label.render("50-ZÜGE-REGEL", True, TEXT_MUTED)
+        surf.blit(lbl_50, (HIST_X + 6, y_counter))
+        remaining = 100 - self._board.halfmove_clock
+        val_50 = font_hist.render(f"{remaining} Halbzüge", True, TEXT_MUTED)
+        surf.blit(val_50, (HIST_X + 6, y_counter + lbl_50.get_height() + 2))
+
     # ------------------------------------------------------------------
     # Game over overlay
 
