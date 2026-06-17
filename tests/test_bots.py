@@ -64,3 +64,16 @@ def test_greedy_bot_promotion_scored():
     bot = GreedyBot("Greed")
     move = bot.choose_move(b)
     assert move.promotion == PieceType.QUEEN  # always promotes to Queen
+
+
+def test_greedy_bot_writes_eval_to_progress():
+    from bots.progress import BotProgress
+    b = BitBoard()
+    b.set_piece(3, Color.WHITE, PieceType.KING)
+    b.set_piece(33, Color.BLACK, PieceType.KING)
+    b.set_piece(6, Color.WHITE, PieceType.ROOK)   # White has a rook (value=5)
+    bot = GreedyBot("Greed")
+    p = BotProgress()
+    bot.choose_move(b, progress=p)
+    assert p.eval is not None
+    assert p.eval == 5.0   # White up a rook = +5 pawn units

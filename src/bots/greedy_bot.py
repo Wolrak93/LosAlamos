@@ -3,7 +3,8 @@ from __future__ import annotations
 import random
 
 from bots.base import Bot
-from engine.board import PIECE_VALUES, BitBoard, PieceType
+from bots.progress import BotProgress
+from engine.board import PIECE_VALUES, BitBoard, Color, PieceType
 from engine.gamestate import GameResult, get_game_outcome, play_move
 from engine.move import Move
 from engine.movegen import generate_legal_moves
@@ -19,7 +20,23 @@ def _score(move: Move) -> int:
 
 
 class GreedyBot(Bot):
-    def choose_move(self, board: BitBoard, time_budget_seconds: float | None = None) -> Move:
+    def choose_move(
+        self,
+        board: BitBoard,
+        time_budget_seconds: float | None = None,
+        progress: BotProgress | None = None,
+    ) -> Move:
+        if progress is not None:
+            white_mat = sum(
+                bin(board.pieces[Color.WHITE][pt]).count("1") * PIECE_VALUES[pt]
+                for pt in PieceType if pt != PieceType.KING
+            )
+            black_mat = sum(
+                bin(board.pieces[Color.BLACK][pt]).count("1") * PIECE_VALUES[pt]
+                for pt in PieceType if pt != PieceType.KING
+            )
+            progress.eval = float(white_mat - black_mat)
+
         legal = generate_legal_moves(board)
 
         # 1. Checkmate in 1
