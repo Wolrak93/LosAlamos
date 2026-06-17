@@ -1,6 +1,8 @@
 # src/bots/personalities.py
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from bots.evaluator import Evaluator
 from bots.mcts_bot import MCTSBot
 from bots.minimax_bot import MinimaxBot
@@ -46,7 +48,7 @@ def create_bethe(name: str = "Bethe") -> MCTSBot:
     return MCTSBot(Evaluator(material=True, positional=True, mobility=True), name)
 
 
-ALL_SCIENTISTS: list[tuple[str, callable]] = [
+ALL_SCIENTISTS: list[tuple[str, Callable[..., MinimaxBot | MCTSBot]]] = [
     ("Fermi",       create_fermi),
     ("von Neumann", create_von_neumann),
     ("Oppenheimer", create_oppenheimer),
