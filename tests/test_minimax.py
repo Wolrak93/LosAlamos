@@ -42,3 +42,16 @@ def test_minimax_respects_time_budget():
     bot.choose_move(board, time_budget_seconds=1.0)
     elapsed = time.monotonic() - start
     assert elapsed < 3.0  # generous margin for slow CI
+
+
+def test_minimax_writes_progress():
+    from bots.progress import BotProgress
+    from engine.positions import make_starting_board
+    board = make_starting_board()
+    bot = _make_minimax()
+    p = BotProgress()
+    bot.choose_move(board, time_budget_seconds=1.0, progress=p)
+    assert p.depth is not None
+    assert p.depth >= 1
+    assert p.eval is not None
+    assert isinstance(p.eval, float)

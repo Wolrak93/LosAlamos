@@ -5,6 +5,7 @@ import time
 
 from bots.base import Bot
 from bots.evaluator import Evaluator
+from bots.progress import BotProgress
 from engine.board import PIECE_VALUES, BitBoard, Color
 from engine.gamestate import GameResult, get_game_outcome, play_move
 from engine.move import Move
@@ -115,7 +116,12 @@ class MinimaxBot(Bot):
         super().__init__(name)
         self._evaluator = evaluator
 
-    def choose_move(self, board: BitBoard, time_budget_seconds: float | None = None) -> Move:
+    def choose_move(
+        self,
+        board: BitBoard,
+        time_budget_seconds: float | None = None,
+        progress: BotProgress | None = None,
+    ) -> Move:
         budget = 120.0 if time_budget_seconds is None else time_budget_seconds
         start = time.monotonic()
         deadline = start + budget
@@ -128,13 +134,17 @@ class MinimaxBot(Bot):
                 break
             result = self._search_root(board, depth, deadline, tt)
             if result is not None:
-                best_move = result
+                best_move, best_score = result
+                if progress is not None:
+                    eval_white = best_score if board.side_to_move == Color.WHITE else -best_score
+                    progress.depth = depth
+                    progress.eval = eval_white / 100.0
 
         if best_move is None:
             best_move = generate_legal_moves(board)[0]
         return best_move
 
-    def _search_root(self, board: BitBoard, depth: int, deadline: float, tt: dict) -> Move | None:
+    def _search_root(self, board: BitBoard, depth: int, deadline: float, tt: dict) -> tuple[Move, int] | None:
         moves = generate_legal_moves(board)
         moves.sort(key=_mvv_lva, reverse=True)
         best_move: Move | None = None
@@ -150,4 +160,6 @@ class MinimaxBot(Bot):
                 alpha = score
                 best_move = move
 
-        return best_move
+        if best_move is None:
+            return None
+        return (best_move, alpha)
