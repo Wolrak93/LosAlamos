@@ -23,6 +23,8 @@ from gui.constants import (
     CLOCK_INACTIVE_BG,
     CLOCK_INACTIVE_FG,
     FILE_NAMES,
+    HIGHLIGHT_LAST_FROM,
+    HIGHLIGHT_LAST_TO,
     HIGHLIGHT_LEGAL,
     HIGHLIGHT_SEL,
     HIST_W,
@@ -104,6 +106,7 @@ class GameScreen:
         self._promo_move_base: Move | None = None   # move without promotion set
         self._promo_sq: int | None = None           # the destination square
         self._promo_hover: int | None = None        # 0=Q, 1=R, 2=N
+        self._last_move: tuple[int, int] | None = None  # (from_sq, to_sq)
         # Rects set by draw() — initialised here so handle_event() can safely reference them
         self._back_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self._new_game_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
@@ -147,13 +150,12 @@ class GameScreen:
                     GameResult.BLACK_WINS if loser == Color.WHITE
                     else GameResult.WHITE_WINS
                 )
-                from engine.gamestate import has_insufficient_material
-                if has_insufficient_material(self._board):
-                    from engine.gamestate import GameOutcome as GO
-                    self._outcome = GO(GameResult.DRAW, "Unzureichendes Material")
+                from engine.gamestate import _side_has_insufficient_material
+                winner_color = Color(1 - int(loser))
+                if _side_has_insufficient_material(self._board, winner_color):
+                    self._outcome = GameOutcome(GameResult.DRAW, "Unzureichendes Material")
                 else:
-                    from engine.gamestate import GameOutcome as GO
-                    self._outcome = GO(winner_result, "Zeit abgelaufen")
+                    self._outcome = GameOutcome(winner_result, "Zeit abgelaufen")
 
     def draw(self) -> None:
         self._surf.fill(BG)
@@ -276,6 +278,7 @@ class GameScreen:
     def _make_move(self, move: Move) -> None:
         pgn = move.to_pgn()
         play_move(self._board, move)
+        self._last_move = (move.from_sq, move.to_sq)
         if self._use_clock:
             moved_color = Color(1 - int(self._board.side_to_move))
             self._clocks[moved_color] = max(0, self._clocks[moved_color] + self._increment)
@@ -542,7 +545,7 @@ class GameScreen:
 
         panel_top = 30
         row_h = font_hist.get_height() + 4
-        available_h = WINDOW_H - panel_top - 10
+        available_h = WINDOW_H - panel_top - 66
         max_rows = max(1, available_h // row_h)
 
         # Build the full list of rows to display (completed pairs + optional half-move)
@@ -590,19 +593,22 @@ class GameScreen:
         pygame.draw.rect(surf, CARD_BG, box, border_radius=8)
         pygame.draw.rect(surf, BORDER, box, 2, border_radius=8)
 
-        font_icon = get_font("serif", 32)
         font_title = get_font("serif", 18)
         font_reason = get_font("serif", 12)
         font_btn = get_font("serif", 13)
 
         result = self._outcome.result
-        icon = "♔" if result == GameResult.WHITE_WINS else (
-               "♚" if result == GameResult.BLACK_WINS else "½")
         title = ("Weiß gewinnt" if result == GameResult.WHITE_WINS else
                  "Schwarz gewinnt" if result == GameResult.BLACK_WINS else "Remis")
 
+        from gui.assets import get_small_sprite
         y = box.y + 14
-        it = font_icon.render(icon, True, ACCENT)
+        if result == GameResult.WHITE_WINS:
+            it = get_small_sprite(Color.WHITE, PieceType.KING, 32)
+        elif result == GameResult.BLACK_WINS:
+            it = get_small_sprite(Color.BLACK, PieceType.KING, 32)
+        else:
+            it = get_font("serif", 32).render("½", True, ACCENT)
         surf.blit(it, (box.centerx - it.get_width() // 2, y))
         y += it.get_height() + 4
         tt = font_title.render(title, True, TEXT_DARK)
