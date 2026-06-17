@@ -29,20 +29,32 @@ def is_in_check(board: BitBoard) -> bool:
     return is_square_attacked(board, king_sq, opp)
 
 
+def _side_has_insufficient_material(board: BitBoard, color: Color) -> bool:
+    pieces = board.pieces[color]
+    if pieces[PieceType.ROOK] or pieces[PieceType.QUEEN] or pieces[PieceType.PAWN]:
+        return False
+    return bin(pieces[PieceType.KNIGHT]).count("1") <= 1
+
+
 def has_insufficient_material(board: BitBoard) -> bool:
-    for color in (Color.WHITE, Color.BLACK):
-        pieces = board.pieces[color]
-        if (pieces[PieceType.ROOK] or pieces[PieceType.QUEEN]
-                or pieces[PieceType.PAWN]):
-            return False
-        # King + Knight only
-        knight_count = bin(pieces[PieceType.KNIGHT]).count("1")
-        if knight_count > 1:
-            return False
-    return True
+    return all(
+        _side_has_insufficient_material(board, c) for c in (Color.WHITE, Color.BLACK)
+    )
 
 
 def get_game_outcome(board: BitBoard) -> GameOutcome | None:
+    # Checkmate and stalemate take priority over all draw conditions
+    legal = generate_legal_moves(board)
+    if not legal:
+        if is_in_check(board):
+            winner = (
+                GameResult.BLACK_WINS
+                if board.side_to_move == Color.WHITE
+                else GameResult.WHITE_WINS
+            )
+            return GameOutcome(winner, "Schachmatt")
+        return GameOutcome(GameResult.DRAW, "Patt")
+
     # 50-move rule
     if board.halfmove_clock >= 100:
         return GameOutcome(GameResult.DRAW, "50-Züge-Regel")
@@ -55,18 +67,6 @@ def get_game_outcome(board: BitBoard) -> GameOutcome | None:
     # Insufficient material
     if has_insufficient_material(board):
         return GameOutcome(GameResult.DRAW, "Unzureichendes Material")
-
-    # No legal moves
-    legal = generate_legal_moves(board)
-    if not legal:
-        if is_in_check(board):
-            winner = (
-                GameResult.BLACK_WINS
-                if board.side_to_move == Color.WHITE
-                else GameResult.WHITE_WINS
-            )
-            return GameOutcome(winner, "Schachmatt")
-        return GameOutcome(GameResult.DRAW, "Patt")
 
     return None
 

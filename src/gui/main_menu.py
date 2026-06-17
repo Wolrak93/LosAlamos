@@ -60,26 +60,26 @@ class MainMenuScreen:
         self._white_type_dd = Dropdown(
             pygame.Rect(left_x, 160, 200, row_h), _BOT_OPTIONS, 0)
         self._white_name_rect = pygame.Rect(left_x, 160 + row_h + gap, 200, row_h)
-        self._white_name = "Spieler 1"
+        self._white_name = "Weiß"
 
         # Black player
         self._black_type_dd = Dropdown(
-            pygame.Rect(left_x, 260, 200, row_h), _BOT_OPTIONS, 1)
+            pygame.Rect(left_x, 260, 200, row_h), _BOT_OPTIONS, 0)
         self._black_name_rect = pygame.Rect(left_x, 260 + row_h + gap, 200, row_h)
-        self._black_name = "RandomBot"
+        self._black_name = "Schwarz"
 
         # Active input field
         self._active_input: str | None = None  # "white" or "black"
 
         # Time control
-        self._time_rect = pygame.Rect(left_x, 370, 90, row_h)
-        self._inc_rect = pygame.Rect(left_x + 110, 370, 80, row_h)
+        self._time_rect = pygame.Rect(left_x, 388, 90, row_h)
+        self._inc_rect = pygame.Rect(left_x + 110, 388, 80, row_h)
         self._time_str = ""
         self._inc_str = ""
         self._active_time: str | None = None  # "time" or "inc"
 
         # Start button
-        self._start_rect = pygame.Rect(left_x, 420, 200, 40)
+        self._start_rect = pygame.Rect(left_x, 440, 200, 40)
 
         # Starting position selection
         self._pos_selected = 0
@@ -208,11 +208,11 @@ class MainMenuScreen:
                          self._active_input == "black", font_body)
 
         # Divider
-        pygame.draw.line(surf, BORDER, (left_x - 10, 355), (left_x + 200, 355), 1)
+        pygame.draw.line(surf, BORDER, (left_x - 10, 350), (left_x + 200, 350), 1)
 
         # Time control
         lbl = font_label.render("ZEIT & INKREMENT", True, TEXT_MUTED)
-        surf.blit(lbl, (left_x, 358))
+        surf.blit(lbl, (left_x, 364))
         self._draw_input(surf, self._time_rect, self._time_str or "",
                          self._active_time == "time", font_body,
                          placeholder="min")
