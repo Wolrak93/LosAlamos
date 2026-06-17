@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pygame
+import threading
 
 from engine.board import PIECE_VALUES, Color, PieceType
 from engine.gamestate import GameOutcome, GameResult, get_game_outcome, play_move
@@ -42,6 +43,7 @@ from gui.constants import (
     get_font,
 )
 from gui.main_menu import GameConfig
+from bots.progress import BotProgress
 
 _BOT_MOVE_EVENT = pygame.USEREVENT + 1
 _BOT_DELAY_MS = 300
@@ -111,6 +113,14 @@ class GameScreen:
         self._back_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self._new_game_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self._menu_from_over_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
+        # Bot threading
+        self._bot_thread: threading.Thread | None = None
+        self._bot_progress: BotProgress | None = None
+        self._bot_result: list = [None]
+        self._last_eval: dict[Color, float | None] = {
+            Color.WHITE: None,
+            Color.BLACK: None,
+        }
         # Schedule bot if it moves first
         self._maybe_schedule_bot()
 
@@ -126,7 +136,7 @@ class GameScreen:
             return None
         if event.type == _BOT_MOVE_EVENT:
             pygame.time.set_timer(_BOT_MOVE_EVENT, 0)
-            self._execute_bot_move()
+            self._start_bot_thread()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self._back_rect.collidepoint(event.pos):
                 return MainMenuScreen(self._surf)
@@ -140,6 +150,17 @@ class GameScreen:
             return
         if self._promo_sq is not None:
             return
+        # Poll bot thread for completion
+        if self._bot_thread is not None and not self._bot_thread.is_alive():
+            move = self._bot_result[0]
+            color = self._board.side_to_move
+            if self._bot_progress is not None and self._bot_progress.eval is not None:
+                self._last_eval[color] = self._bot_progress.eval
+            self._bot_thread = None
+            self._bot_progress = None
+            if move is not None:
+                self._make_move(move)
+        # Clock
         if self._use_clock:
             color = self._board.side_to_move
             self._clocks[color] -= dt
@@ -370,9 +391,11 @@ class GameScreen:
         if self._is_bot_turn() and self._outcome is None:
             pygame.time.set_timer(_BOT_MOVE_EVENT, _BOT_DELAY_MS)
 
-    def _execute_bot_move(self) -> None:
+    def _start_bot_thread(self) -> None:
         if self._outcome is not None:
             return
+        if self._bot_thread is not None:
+            return  # already thinking
         color = self._board.side_to_move
         bot = self._config.white_bot if color == Color.WHITE else self._config.black_bot
         if bot is None or not self._legal_moves:
@@ -381,8 +404,17 @@ class GameScreen:
         remaining = self._clocks[color] if self._use_clock else None
         move_number = self._board.ply // 2 + 1
         budget = calculate_time_budget(remaining, move_number, self._increment)
-        move = bot.choose_move(self._board, budget)
-        self._make_move(move)
+        board_copy = self._board.copy()
+        self._bot_result = [None]
+        self._bot_progress = BotProgress()
+        result_holder = self._bot_result
+        progress = self._bot_progress
+
+        def _run() -> None:
+            result_holder[0] = bot.choose_move(board_copy, budget, progress)
+
+        self._bot_thread = threading.Thread(target=_run, daemon=True)
+        self._bot_thread.start()
 
     # ------------------------------------------------------------------
     # Info panel
