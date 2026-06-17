@@ -242,9 +242,13 @@ class MainMenuScreen:
             t = font_body.render(label, True, ACCENT if i == self._pos_selected else TEXT_DARK)
             surf.blit(t, (r.centerx - t.get_width() // 2, r.centery - t.get_height() // 2))
 
-        # Dropdowns drawn last so open lists render on top of all other elements
-        self._white_type_dd.draw(surf)
-        self._black_type_dd.draw(surf)
+        # Open dropdown drawn last so its list is never covered by the other box
+        if self._white_type_dd.open:
+            self._black_type_dd.draw(surf)
+            self._white_type_dd.draw(surf)
+        else:
+            self._white_type_dd.draw(surf)
+            self._black_type_dd.draw(surf)
 
     def _draw_input(self, surf, rect, text, active, font, placeholder=""):
         pygame.draw.rect(surf, CARD_BG, rect, border_radius=3)
