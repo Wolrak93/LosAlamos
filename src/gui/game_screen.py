@@ -3,7 +3,7 @@ from __future__ import annotations
 import pygame
 import threading
 
-from engine.board import PIECE_VALUES, Color, PieceType
+from engine.board import Color, PieceType
 from engine.gamestate import GameOutcome, GameResult, get_game_outcome, play_move
 from engine.move import Move
 from engine.movegen import generate_legal_moves
@@ -470,21 +470,56 @@ class GameScreen:
                 )
                 surf.blit(lbl, (INFO_X + 8, y))
                 y += lbl.get_height() + 3
-                self._draw_eval_bar(surf, pygame.Rect(INFO_X + 8, y, INFO_W - 16, 8), color)
-                y += 14
-                # Large eval number
-                diff = self._calc_eval_diff()
-                sign = "+" if diff > 0 else ""
-                eval_str = f"{sign}{diff:.2f}"
-                if diff > 0:
-                    eval_color = ACCENT
-                elif diff < 0:
-                    eval_color = (160, 60, 60)
+
+                is_thinking = (
+                    self._bot_thread is not None
+                    and self._board.side_to_move == color
+                )
+                if is_thinking and self._bot_progress is not None:
+                    current_eval = self._bot_progress.eval
                 else:
+                    current_eval = self._last_eval[color]
+
+                self._draw_eval_bar(
+                    surf, pygame.Rect(INFO_X + 8, y, INFO_W - 16, 8), color, current_eval
+                )
+                y += 14
+
+                if current_eval is not None:
+                    sign = "+" if current_eval > 0 else ""
+                    eval_str = f"{sign}{current_eval:.2f}"
+                    if current_eval > 0:
+                        eval_color = ACCENT
+                    elif current_eval < 0:
+                        eval_color = (160, 60, 60)
+                    else:
+                        eval_color = TEXT_MUTED
+                else:
+                    eval_str = "—"
                     eval_color = TEXT_MUTED
                 et = font_eval.render(eval_str, True, eval_color)
                 surf.blit(et, (INFO_X + INFO_W // 2 - et.get_width() // 2, y))
-                y += et.get_height() + 6
+                y += et.get_height() + 2
+
+                # Depth / sims during thinking
+                if is_thinking and self._bot_progress is not None:
+                    from bots.minimax_bot import MinimaxBot
+                    from bots.mcts_bot import MCTSBot
+                    bot = self._config.white_bot if color == Color.WHITE else self._config.black_bot
+                    if isinstance(bot, MinimaxBot) and self._bot_progress.depth is not None:
+                        status_str = f"Tiefe {self._bot_progress.depth}"
+                    elif isinstance(bot, MCTSBot) and self._bot_progress.sims is not None:
+                        status_str = f"{self._bot_progress.sims:,} Sims".replace(",", " ")
+                    else:
+                        status_str = None
+                    if status_str is not None:
+                        st = font_label.render(status_str, True, TEXT_MUTED)
+                        surf.blit(st, (INFO_X + INFO_W // 2 - st.get_width() // 2, y))
+                        y += st.get_height() + 4
+                    else:
+                        y += 4
+                else:
+                    y += 4
 
         # Black at top
         black_bot = self._config.black_bot
@@ -520,18 +555,12 @@ class GameScreen:
         self._back_rect = back_rect
 
     def _draw_eval_bar(self, surf: pygame.Surface, rect: pygame.Rect,
-                       color: Color) -> None:
-        # Material balance eval
-        white_mat = sum(
-            bin(self._board.pieces[Color.WHITE][pt]).count("1") * PIECE_VALUES[pt]
-            for pt in PieceType if pt != PieceType.KING
-        )
-        black_mat = sum(
-            bin(self._board.pieces[Color.BLACK][pt]).count("1") * PIECE_VALUES[pt]
-            for pt in PieceType if pt != PieceType.KING
-        )
-        total = white_mat + black_mat if (white_mat + black_mat) > 0 else 1
-        white_frac = white_mat / total
+                       color: Color, eval_value: float | None) -> None:
+        if eval_value is None:
+            white_frac = 0.5
+        else:
+            clamped = max(-5.0, min(5.0, eval_value))
+            white_frac = (clamped + 5.0) / 10.0
 
         pygame.draw.rect(surf, (90, 58, 26), rect, border_radius=3)
         white_w = int(rect.width * white_frac)
@@ -540,23 +569,6 @@ class GameScreen:
                              (240, 217, 181),
                              pygame.Rect(rect.x, rect.y, white_w, rect.height),
                              border_radius=3)
-        diff = white_mat - black_mat
-        sign = "+" if diff > 0 else ""
-        val_str = f"{sign}{diff} ♙"
-        font = get_font("monospace", 10)
-        vt = font.render(val_str, True, ACCENT)
-        surf.blit(vt, (rect.right + 4, rect.centery - vt.get_height() // 2))
-
-    def _calc_eval_diff(self) -> int:
-        white_mat = sum(
-            bin(self._board.pieces[Color.WHITE][pt]).count("1") * PIECE_VALUES[pt]
-            for pt in PieceType if pt != PieceType.KING
-        )
-        black_mat = sum(
-            bin(self._board.pieces[Color.BLACK][pt]).count("1") * PIECE_VALUES[pt]
-            for pt in PieceType if pt != PieceType.KING
-        )
-        return white_mat - black_mat
 
     def _draw_captured_images(self, surf: pygame.Surface, x: int, y: int,
                                color: Color, icon_size: int = 16) -> None:
