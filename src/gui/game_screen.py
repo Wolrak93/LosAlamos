@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-import pygame
 import threading
 
+import pygame
+
+from bots.progress import BotProgress
 from engine.board import Color, PieceType
 from engine.gamestate import GameOutcome, GameResult, get_game_outcome, play_move
 from engine.move import Move
@@ -43,7 +45,6 @@ from gui.constants import (
     get_font,
 )
 from gui.main_menu import GameConfig
-from bots.progress import BotProgress
 
 _BOT_MOVE_EVENT = pygame.USEREVENT + 1
 _BOT_DELAY_MS = 300
@@ -503,8 +504,8 @@ class GameScreen:
 
                 # Depth / sims during thinking
                 if is_thinking and self._bot_progress is not None:
-                    from bots.minimax_bot import MinimaxBot
                     from bots.mcts_bot import MCTSBot
+                    from bots.minimax_bot import MinimaxBot
                     bot = self._config.white_bot if color == Color.WHITE else self._config.black_bot
                     if isinstance(bot, MinimaxBot) and self._bot_progress.depth is not None:
                         status_str = f"Tiefe {self._bot_progress.depth}"
