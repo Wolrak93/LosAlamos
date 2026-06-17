@@ -45,6 +45,11 @@ _BOT_MOVE_EVENT = pygame.USEREVENT + 1
 _BOT_DELAY_MS = 300
 
 
+def _is_evaluating_bot(bot) -> bool:
+    from bots.random_bot import RandomBot
+    return bot is not None and not isinstance(bot, RandomBot)
+
+
 class GameScreen:
     def __init__(self, surface: pygame.Surface, config: GameConfig) -> None:
         self._surf = surface
