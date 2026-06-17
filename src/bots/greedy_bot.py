@@ -19,7 +19,7 @@ def _score(move: Move) -> int:
 
 
 class GreedyBot(Bot):
-    def choose_move(self, board: BitBoard) -> Move:
+    def choose_move(self, board: BitBoard, time_budget_seconds: float | None = None) -> Move:
         legal = generate_legal_moves(board)
 
         # 1. Checkmate in 1

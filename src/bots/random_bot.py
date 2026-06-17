@@ -9,5 +9,5 @@ from engine.movegen import generate_legal_moves
 
 
 class RandomBot(Bot):
-    def choose_move(self, board: BitBoard) -> Move:
+    def choose_move(self, board: BitBoard, time_budget_seconds: float | None = None) -> Move:
         return random.choice(generate_legal_moves(board))
