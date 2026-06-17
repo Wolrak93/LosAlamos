@@ -360,7 +360,7 @@ class GameScreen:
         active = self._board.side_to_move
         y = 12
 
-        def draw_player(color: Color, name: str, bot_label: str, evaluating: bool) -> int:
+        def draw_player(color: Color, name: str, bot_label: str, evaluating: bool) -> None:
             nonlocal y
             is_active = (color == active and self._outcome is None)
             # Name + type
@@ -410,7 +410,6 @@ class GameScreen:
                 et = font_eval.render(eval_str, True, eval_color)
                 surf.blit(et, (INFO_X + INFO_W // 2 - et.get_width() // 2, y))
                 y += et.get_height() + 6
-            return y
 
         # Black at top
         black_bot = self._config.black_bot
