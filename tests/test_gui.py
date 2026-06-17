@@ -98,3 +98,21 @@ def test_first_click_own_piece_selects():
         color=Color.BLACK,
     )
     assert result == 10
+
+
+def test_grouped_dropdown_value_and_selection():
+    import pygame
+    pygame.init()
+    from gui.widgets import GroupedDropdown
+    entries = [
+        (True,  "── A ──", ""),
+        (False, "Alpha",   "sub1"),
+        (False, "Beta",    "sub2"),
+        (True,  "── B ──", ""),
+        (False, "Gamma",   "sub3"),
+    ]
+    dd = GroupedDropdown(pygame.Rect(0, 0, 200, 32), entries, selected=0)
+    assert dd.value == "Alpha"
+    dd.selected = 2
+    assert dd.value == "Gamma"
+    pygame.quit()
