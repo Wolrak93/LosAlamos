@@ -61,6 +61,8 @@ class MCTSBot(Bot):
             score = self._simulate(node, board.side_to_move)
             self._backpropagate(node, score)
 
+        if not root.children:
+            return generate_legal_moves(board)[0]
         return root.most_visited_child().move  # type: ignore[return-value]
 
     def _select(self, node: _Node) -> _Node:
