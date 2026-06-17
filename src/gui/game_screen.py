@@ -51,9 +51,9 @@ def _is_evaluating_bot(bot) -> bool:
 
 
 def _net_captured_count(board, color: Color, pt: PieceType) -> int:
-    """Returns how many more pieces of type pt `color` has on the board than the opponent.
+    """Returns how many more pieces of type pt `color` has remaining than the opponent.
 
-    A positive result means the opponent has lost more pieces of this type,
+    A positive result means the opponent has lost more of that piece type,
     so the info panel shows that many opponent-colored icons next to `color`.
     """
     opp = Color(1 - int(color))
