@@ -55,3 +55,33 @@ def test_minimax_writes_progress():
     assert p.depth >= 1
     assert p.eval is not None
     assert isinstance(p.eval, float)
+
+
+def test_minimax_sets_mate_in_when_checkmate_found():
+    b = BitBoard()
+    b.set_piece(0, Color.WHITE, PieceType.KING)
+    b.set_piece(35, Color.BLACK, PieceType.KING)
+    b.set_piece(5, Color.WHITE, PieceType.ROOK)
+    b.set_piece(24, Color.WHITE, PieceType.QUEEN)
+    from bots.progress import BotProgress
+    bot = _make_minimax()
+    p = BotProgress()
+    bot.choose_move(b, time_budget_seconds=5.0, progress=p)
+    assert p.mate_in is not None
+    assert p.mate_in > 0  # White wins
+
+
+def test_minimax_exits_early_on_forced_mate():
+    b = BitBoard()
+    b.set_piece(0, Color.WHITE, PieceType.KING)
+    b.set_piece(35, Color.BLACK, PieceType.KING)
+    b.set_piece(5, Color.WHITE, PieceType.ROOK)
+    b.set_piece(24, Color.WHITE, PieceType.QUEEN)
+    from bots.progress import BotProgress
+    bot = _make_minimax()
+    p = BotProgress()
+    start = time.monotonic()
+    bot.choose_move(b, time_budget_seconds=60.0, progress=p)
+    elapsed = time.monotonic() - start
+    assert elapsed < 5.0
+    assert p.mate_in is not None

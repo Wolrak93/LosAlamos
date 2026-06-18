@@ -1,6 +1,7 @@
 # src/bots/minimax_bot.py
 from __future__ import annotations
 
+import math
 import time
 
 from bots.base import Bot
@@ -138,9 +139,19 @@ class MinimaxBot(Bot):
             if result is not None:
                 best_move, best_score = result
                 if progress is not None:
-                    eval_white = best_score if board.side_to_move == Color.WHITE else -best_score
+                    eval_white = (
+                        best_score if board.side_to_move == Color.WHITE else -best_score
+                    )
                     progress.depth = depth
                     progress.eval = eval_white / 100.0
+                    if abs(best_score) >= _MATE - _MAX_DEPTH:
+                        ply = _MATE - abs(best_score)
+                        moves = math.ceil(ply / 2)
+                        sign = 1 if eval_white > 0 else -1
+                        progress.mate_in = sign * moves
+                        break
+                    else:
+                        progress.mate_in = None
 
         if best_move is None:
             best_move = generate_legal_moves(board)[0]
