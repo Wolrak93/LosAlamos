@@ -122,6 +122,10 @@ class GameScreen:
             Color.WHITE: None,
             Color.BLACK: None,
         }
+        self._last_mate_in: dict[Color, int | None] = {
+            Color.WHITE: None,
+            Color.BLACK: None,
+        }
         # Schedule bot if it moves first
         self._maybe_schedule_bot()
 
@@ -157,6 +161,8 @@ class GameScreen:
             color = self._board.side_to_move
             if self._bot_progress is not None and self._bot_progress.eval is not None:
                 self._last_eval[color] = self._bot_progress.eval
+            if self._bot_progress is not None:
+                self._last_mate_in[color] = self._bot_progress.mate_in
             self._bot_thread = None
             self._bot_progress = None
             if move is not None:
@@ -478,8 +484,10 @@ class GameScreen:
                 )
                 if is_thinking and self._bot_progress is not None:
                     current_eval = self._bot_progress.eval
+                    current_mate_in = self._bot_progress.mate_in
                 else:
                     current_eval = self._last_eval[color]
+                    current_mate_in = self._last_mate_in[color]
 
                 self._draw_eval_bar(
                     surf, pygame.Rect(INFO_X + 8, y, INFO_W - 16, 8), color, current_eval
@@ -487,8 +495,11 @@ class GameScreen:
                 y += 14
 
                 if current_eval is not None:
-                    sign = "+" if current_eval > 0 else ""
-                    eval_str = f"{sign}{current_eval:.2f}"
+                    if current_mate_in is not None:
+                        eval_str = f"Matt in {abs(current_mate_in)}"
+                    else:
+                        sign = "+" if current_eval > 0 else ""
+                        eval_str = f"{sign}{current_eval:.2f}"
                     if current_eval > 0:
                         eval_color = ACCENT
                     elif current_eval < 0:
