@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import threading
+
 import pygame
 
-from engine.board import PIECE_VALUES, Color, PieceType
+from bots.progress import BotProgress
+from engine.board import Color, PieceType
 from engine.gamestate import GameOutcome, GameResult, get_game_outcome, play_move
 from engine.move import Move
 from engine.movegen import generate_legal_moves
@@ -111,6 +114,18 @@ class GameScreen:
         self._back_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self._new_game_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self._menu_from_over_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
+        # Bot threading
+        self._bot_thread: threading.Thread | None = None
+        self._bot_progress: BotProgress | None = None
+        self._bot_result: list[Move | None] = [None]
+        self._last_eval: dict[Color, float | None] = {
+            Color.WHITE: None,
+            Color.BLACK: None,
+        }
+        self._last_mate_in: dict[Color, int | None] = {
+            Color.WHITE: None,
+            Color.BLACK: None,
+        }
         # Schedule bot if it moves first
         self._maybe_schedule_bot()
 
@@ -126,7 +141,7 @@ class GameScreen:
             return None
         if event.type == _BOT_MOVE_EVENT:
             pygame.time.set_timer(_BOT_MOVE_EVENT, 0)
-            self._execute_bot_move()
+            self._start_bot_thread()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self._back_rect.collidepoint(event.pos):
                 return MainMenuScreen(self._surf)
@@ -140,6 +155,32 @@ class GameScreen:
             return
         if self._promo_sq is not None:
             return
+        # Poll bot thread for completion
+        if self._bot_thread is not None and not self._bot_thread.is_alive():
+            move = self._bot_result[0]
+            color = self._board.side_to_move
+            if self._bot_progress is not None and self._bot_progress.eval is not None:
+                self._last_eval[color] = self._bot_progress.eval
+            if self._bot_progress is not None:
+                self._last_mate_in[color] = self._bot_progress.mate_in
+            if move is not None and self._bot_progress is not None:
+                bot = self._config.white_bot if color == Color.WHITE else self._config.black_bot
+                bot_name = bot.name if bot is not None else "Bot"
+                mate_in = self._bot_progress.mate_in
+                if mate_in is not None:
+                    sign = "+" if mate_in > 0 else "-"
+                    eval_str = f"{sign}M{abs(mate_in)}"
+                elif self._bot_progress.eval is not None:
+                    sign = "+" if self._bot_progress.eval > 0 else ""
+                    eval_str = f"{sign}{self._bot_progress.eval:.2f}"
+                else:
+                    eval_str = "—"
+                print(f"{bot_name} plays {move.to_pgn()}: Eval {eval_str}")
+            self._bot_thread = None
+            self._bot_progress = None
+            if move is not None:
+                self._make_move(move)
+        # Clock
         if self._use_clock:
             color = self._board.side_to_move
             self._clocks[color] -= dt
@@ -370,15 +411,30 @@ class GameScreen:
         if self._is_bot_turn() and self._outcome is None:
             pygame.time.set_timer(_BOT_MOVE_EVENT, _BOT_DELAY_MS)
 
-    def _execute_bot_move(self) -> None:
+    def _start_bot_thread(self) -> None:
         if self._outcome is not None:
             return
+        if self._bot_thread is not None:
+            return  # already thinking
         color = self._board.side_to_move
         bot = self._config.white_bot if color == Color.WHITE else self._config.black_bot
         if bot is None or not self._legal_moves:
             return
-        move = bot.choose_move(self._board)
-        self._make_move(move)
+        from bots.personalities import calculate_time_budget
+        remaining = self._clocks[color] if self._use_clock else None
+        move_number = self._board.ply // 2 + 1
+        budget = calculate_time_budget(remaining, move_number, self._increment)
+        board_copy = self._board.copy()
+        self._bot_result = [None]
+        self._bot_progress = BotProgress()
+        result_holder = self._bot_result
+        progress = self._bot_progress
+
+        def _run() -> None:
+            result_holder[0] = bot.choose_move(board_copy, budget, progress)
+
+        self._bot_thread = threading.Thread(target=_run, daemon=True)
+        self._bot_thread.start()
 
     # ------------------------------------------------------------------
     # Info panel
@@ -434,21 +490,62 @@ class GameScreen:
                 )
                 surf.blit(lbl, (INFO_X + 8, y))
                 y += lbl.get_height() + 3
-                self._draw_eval_bar(surf, pygame.Rect(INFO_X + 8, y, INFO_W - 16, 8), color)
-                y += 14
-                # Large eval number
-                diff = self._calc_eval_diff()
-                sign = "+" if diff > 0 else ""
-                eval_str = f"{sign}{diff:.2f}"
-                if diff > 0:
-                    eval_color = ACCENT
-                elif diff < 0:
-                    eval_color = (160, 60, 60)
+
+                is_thinking = (
+                    self._bot_thread is not None
+                    and self._board.side_to_move == color
+                )
+                if is_thinking and self._bot_progress is not None:
+                    current_eval = self._bot_progress.eval
+                    current_mate_in = self._bot_progress.mate_in
                 else:
+                    current_eval = self._last_eval[color]
+                    current_mate_in = self._last_mate_in[color]
+
+                self._draw_eval_bar(
+                    surf, pygame.Rect(INFO_X + 8, y, INFO_W - 16, 8), color, current_eval
+                )
+                y += 14
+
+                if current_eval is not None:
+                    if current_mate_in is not None:
+                        sign = "+" if current_mate_in > 0 else "-"
+                        eval_str = f"{sign}M{abs(current_mate_in)}"
+                    else:
+                        sign = "+" if current_eval > 0 else ""
+                        eval_str = f"{sign}{current_eval:.2f}"
+                    if current_eval > 0:
+                        eval_color = ACCENT
+                    elif current_eval < 0:
+                        eval_color = (160, 60, 60)
+                    else:
+                        eval_color = TEXT_MUTED
+                else:
+                    eval_str = "—"
                     eval_color = TEXT_MUTED
                 et = font_eval.render(eval_str, True, eval_color)
                 surf.blit(et, (INFO_X + INFO_W // 2 - et.get_width() // 2, y))
-                y += et.get_height() + 6
+                y += et.get_height() + 2
+
+                # Depth / sims during thinking
+                if is_thinking and self._bot_progress is not None:
+                    from bots.mcts_bot import MCTSBot
+                    from bots.minimax_bot import MinimaxBot
+                    bot = self._config.white_bot if color == Color.WHITE else self._config.black_bot
+                    if isinstance(bot, MinimaxBot) and self._bot_progress.depth is not None:
+                        status_str = f"Tiefe {self._bot_progress.depth}"
+                    elif isinstance(bot, MCTSBot) and self._bot_progress.sims is not None:
+                        status_str = f"{self._bot_progress.sims:,} Sims".replace(",", " ")
+                    else:
+                        status_str = None
+                    if status_str is not None:
+                        st = font_label.render(status_str, True, TEXT_MUTED)
+                        surf.blit(st, (INFO_X + INFO_W // 2 - st.get_width() // 2, y))
+                        y += st.get_height() + 4
+                    else:
+                        y += 4
+                else:
+                    y += 4
 
         # Black at top
         black_bot = self._config.black_bot
@@ -484,18 +581,12 @@ class GameScreen:
         self._back_rect = back_rect
 
     def _draw_eval_bar(self, surf: pygame.Surface, rect: pygame.Rect,
-                       color: Color) -> None:
-        # Material balance eval
-        white_mat = sum(
-            bin(self._board.pieces[Color.WHITE][pt]).count("1") * PIECE_VALUES[pt]
-            for pt in PieceType if pt != PieceType.KING
-        )
-        black_mat = sum(
-            bin(self._board.pieces[Color.BLACK][pt]).count("1") * PIECE_VALUES[pt]
-            for pt in PieceType if pt != PieceType.KING
-        )
-        total = white_mat + black_mat if (white_mat + black_mat) > 0 else 1
-        white_frac = white_mat / total
+                       color: Color, eval_value: float | None) -> None:
+        if eval_value is None:
+            white_frac = 0.5
+        else:
+            clamped = max(-5.0, min(5.0, eval_value))
+            white_frac = (clamped + 5.0) / 10.0
 
         pygame.draw.rect(surf, (90, 58, 26), rect, border_radius=3)
         white_w = int(rect.width * white_frac)
@@ -504,23 +595,6 @@ class GameScreen:
                              (240, 217, 181),
                              pygame.Rect(rect.x, rect.y, white_w, rect.height),
                              border_radius=3)
-        diff = white_mat - black_mat
-        sign = "+" if diff > 0 else ""
-        val_str = f"{sign}{diff} ♙"
-        font = get_font("monospace", 10)
-        vt = font.render(val_str, True, ACCENT)
-        surf.blit(vt, (rect.right + 4, rect.centery - vt.get_height() // 2))
-
-    def _calc_eval_diff(self) -> int:
-        white_mat = sum(
-            bin(self._board.pieces[Color.WHITE][pt]).count("1") * PIECE_VALUES[pt]
-            for pt in PieceType if pt != PieceType.KING
-        )
-        black_mat = sum(
-            bin(self._board.pieces[Color.BLACK][pt]).count("1") * PIECE_VALUES[pt]
-            for pt in PieceType if pt != PieceType.KING
-        )
-        return white_mat - black_mat
 
     def _draw_captured_images(self, surf: pygame.Surface, x: int, y: int,
                                color: Color, icon_size: int = 16) -> None:
