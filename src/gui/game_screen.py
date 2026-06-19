@@ -496,7 +496,8 @@ class GameScreen:
 
                 if current_eval is not None:
                     if current_mate_in is not None:
-                        eval_str = f"Matt in {abs(current_mate_in)}"
+                        sign = "+" if current_mate_in > 0 else "-"
+                        eval_str = f"{sign}M{abs(current_mate_in)}"
                     else:
                         sign = "+" if current_eval > 0 else ""
                         eval_str = f"{sign}{current_eval:.2f}"
