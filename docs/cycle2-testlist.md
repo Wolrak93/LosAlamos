@@ -101,7 +101,7 @@ Checkboxes zum Abhaken. Jeder Abschnitt kann separat durchgearbeitet werden.
 ### B3 — Zeitverhalten / Time Budget
 
 - [x] **B3.1** Ohne Zeitkontrolle: Bot denkt spürbar mehrere Sekunden (kein sofortiger Zug)
-- [ ] **B3.2** Mit 1 Min Zeitkontrolle: Bot verwendet deutlich weniger als die gesamte Restzeit pro Zug
+- [x] **B3.2** Mit 1 Min Zeitkontrolle: Bot verwendet deutlich weniger als die gesamte Restzeit pro Zug
 - [x] **B3.3** Bot-Uhr läuft während der Denkzeit weiter (Thread-Verhalten aus Cycle 1 erhalten)
 - [x] **B3.4** Bot überschreitet nie die gesamte Restzeit — keine Zeitüberschreitung durch Denkzeit allein
 - [x] **B3.5** Mit Inkrement (z.B. 2s): Bot nutzt sichtbar leicht mehr Zeit pro Zug als ohne Inkrement
@@ -127,4 +127,4 @@ Checkboxes zum Abhaken. Jeder Abschnitt kann separat durchgearbeitet werden.
 ## Fortschritt
 
 - Gesamt: 73 Tests (37 automatisierbar, 36 manuell)
-- Erledigt: 72 / 73 (37 A-Tests automatisch ✅, 35 B-Tests manuell ✅, B3.2 offen)
+- Erledigt: 73 / 73 
