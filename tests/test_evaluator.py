@@ -90,3 +90,47 @@ def test_mobility_additivity():
         + (ev_mob.evaluate(b) - ev_mat.evaluate(b))
     )
     assert ev_all.evaluate(b) == expected
+
+
+def test_material_white_extra_pawn():
+    b = _empty_board()
+    b.set_piece(10, Color.WHITE, PieceType.PAWN)
+    ev = Evaluator(material=True)
+    assert ev.evaluate(b) == 100
+
+
+def test_material_white_extra_knight():
+    b = _empty_board()
+    b.set_piece(10, Color.WHITE, PieceType.KNIGHT)
+    ev = Evaluator(material=True)
+    assert ev.evaluate(b) == 300
+
+
+def test_positional_pawn_rank4_beats_rank1():
+    """Pawn on rank 4 (advanced) scores higher than pawn on rank 1 (starting)."""
+    b_advanced = _empty_board()
+    b_advanced.set_piece(24, Color.WHITE, PieceType.PAWN)  # a5 — rank 4
+    b_start = _empty_board()
+    b_start.set_piece(6, Color.WHITE, PieceType.PAWN)      # a2 — rank 1
+    ev = Evaluator(material=True, positional=True)
+    assert ev.evaluate(b_advanced) > ev.evaluate(b_start)
+
+
+def test_positional_endgame_pst_active_with_few_pieces():
+    """With ≤6 pieces, endgame king PST is used: center king beats corner king."""
+    b_center = BitBoard()
+    b_center.set_piece(14, Color.WHITE, PieceType.KING)  # c3 — center
+    b_center.set_piece(35, Color.BLACK, PieceType.KING)  # f6
+    b_corner = BitBoard()
+    b_corner.set_piece(0, Color.WHITE, PieceType.KING)   # a1 — corner
+    b_corner.set_piece(35, Color.BLACK, PieceType.KING)  # f6
+    ev = Evaluator(positional=True)
+    assert ev.evaluate(b_center) > ev.evaluate(b_corner)
+
+
+def test_mobility_symmetric_start_scores_zero():
+    """Symmetric starting position has equal mobility for both sides."""
+    from engine.positions import make_starting_board
+    b = make_starting_board()
+    ev = Evaluator(mobility=True)
+    assert ev.evaluate(b) == 0

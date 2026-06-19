@@ -163,6 +163,19 @@ class GameScreen:
                 self._last_eval[color] = self._bot_progress.eval
             if self._bot_progress is not None:
                 self._last_mate_in[color] = self._bot_progress.mate_in
+            if move is not None and self._bot_progress is not None:
+                bot = self._config.white_bot if color == Color.WHITE else self._config.black_bot
+                bot_name = bot.name if bot is not None else "Bot"
+                mate_in = self._bot_progress.mate_in
+                if mate_in is not None:
+                    sign = "+" if mate_in > 0 else "-"
+                    eval_str = f"{sign}M{abs(mate_in)}"
+                elif self._bot_progress.eval is not None:
+                    sign = "+" if self._bot_progress.eval > 0 else ""
+                    eval_str = f"{sign}{self._bot_progress.eval:.2f}"
+                else:
+                    eval_str = "—"
+                print(f"{bot_name} plays {move.to_pgn()}: Eval {eval_str}")
             self._bot_thread = None
             self._bot_progress = None
             if move is not None:

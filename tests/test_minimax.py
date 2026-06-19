@@ -85,3 +85,40 @@ def test_minimax_exits_early_on_forced_mate():
     elapsed = time.monotonic() - start
     assert elapsed < 5.0
     assert p.mate_in is not None
+
+
+def test_minimax_tiny_budget_no_crash():
+    """Even with 1ms budget, bot returns a legal move without crashing."""
+    from engine.positions import make_starting_board
+    board = make_starting_board()
+    bot = _make_minimax()
+    move = bot.choose_move(board, time_budget_seconds=0.001)
+    assert move in generate_legal_moves(board)
+
+
+def test_minimax_single_legal_move():
+    """Bot returns the only legal move when exactly one exists."""
+    # WK a1 in check from BR a3; BQ c3 covers b2; only escape is Kb1.
+    b = BitBoard()
+    b.set_piece(0, Color.WHITE, PieceType.KING)    # a1
+    b.set_piece(12, Color.BLACK, PieceType.ROOK)   # a3 — gives check
+    b.set_piece(14, Color.BLACK, PieceType.QUEEN)  # c3 — covers b2 diagonally
+    b.set_piece(35, Color.BLACK, PieceType.KING)   # f6
+    bot = _make_minimax()
+    legal = generate_legal_moves(b)
+    assert len(legal) == 1, f"Expected 1 legal move, got {len(legal)}"
+    move = bot.choose_move(b, time_budget_seconds=1.0)
+    assert move in legal
+
+
+def test_minimax_captures_hanging_queen():
+    """Bot takes a completely undefended enemy queen for free."""
+    b = BitBoard()
+    b.set_piece(0, Color.WHITE, PieceType.KING)    # a1
+    b.set_piece(12, Color.WHITE, PieceType.ROOK)   # a3
+    b.set_piece(24, Color.BLACK, PieceType.QUEEN)  # a5 — hanging
+    b.set_piece(35, Color.BLACK, PieceType.KING)   # f6
+    bot = _make_minimax()
+    move = bot.choose_move(b, time_budget_seconds=1.0)
+    assert move.to_sq == 24
+    assert move.captured == PieceType.QUEEN

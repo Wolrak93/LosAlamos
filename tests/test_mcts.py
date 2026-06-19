@@ -54,3 +54,20 @@ def test_mcts_writes_progress():
     assert p.sims >= 100
     assert p.eval is not None
     assert isinstance(p.eval, float)
+
+
+def test_mcts_single_legal_move():
+    """Bot returns the only legal move when exactly one exists."""
+    # WK a1 in check from BR a3; BQ c3 covers b2; only escape is Kb1.
+    from engine.board import Color, PieceType
+    b = BitBoard()
+    b.set_piece(0, Color.WHITE, PieceType.KING)    # a1
+    b.set_piece(12, Color.BLACK, PieceType.ROOK)   # a3 — gives check
+    b.set_piece(14, Color.BLACK, PieceType.QUEEN)  # c3 — covers b2 diagonally
+    b.set_piece(35, Color.BLACK, PieceType.KING)   # f6
+    from engine.movegen import generate_legal_moves
+    bot = _make_mcts()
+    legal = generate_legal_moves(b)
+    assert len(legal) == 1, f"Expected 1 legal move, got {len(legal)}"
+    move = bot.choose_move(b, time_budget_seconds=1.0)
+    assert move in legal

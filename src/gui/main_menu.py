@@ -125,6 +125,7 @@ class MainMenuScreen:
         """Returns GameScreen if match started, else None."""
         from gui.game_screen import GameScreen
 
+        dd_was_open = self._white_type_dd.open or self._black_type_dd.open
         self._white_type_dd.handle_event(event)
         self._black_type_dd.handle_event(event)
 
@@ -151,8 +152,8 @@ class MainMenuScreen:
                 if r.collidepoint(event.pos):
                     self._pos_selected = i
 
-            # Start button
-            if self._start_rect.collidepoint(event.pos):
+            # Start button — skip if a dropdown was open (the click closes it, not starts the game)
+            if not dd_was_open and self._start_rect.collidepoint(event.pos):
                 return GameScreen(self._surf, self._build_config())
 
         if event.type == pygame.KEYDOWN:

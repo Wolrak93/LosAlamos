@@ -77,3 +77,17 @@ def test_greedy_bot_writes_eval_to_progress():
     bot.choose_move(b, progress=p)
     assert p.eval is not None
     assert p.eval == 5.0   # White up a rook = +5 pawn units
+
+
+def test_random_bot_accepts_time_budget():
+    board = make_starting_board()
+    bot = RandomBot("Rnd")
+    move = bot.choose_move(board, time_budget_seconds=0.5)
+    assert move in generate_legal_moves(board)
+
+
+def test_greedy_bot_accepts_time_budget():
+    board = make_starting_board()
+    bot = GreedyBot("Greed")
+    move = bot.choose_move(board, time_budget_seconds=0.5)
+    assert move in generate_legal_moves(board)
